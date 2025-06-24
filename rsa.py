@@ -135,6 +135,7 @@ elif role == "送信者":
 # --- 一人で行うモード ---
 elif role == "一人で行う":
     st.header("1. 鍵生成 → 2. 暗号化 → 3. 復号（1人モード）")
+    # 鍵生成
     p_col, q_col, e_col = st.columns(3)
     with p_col:
         p_val = st.selectbox("素数 p", primes, key='p1')
@@ -154,23 +155,21 @@ elif role == "一人で行う":
                 d = mod_inverse(e_val, phi)
                 st.session_state.update({'n': n, 'e': e_val, 'd': d})
                 st.success("鍵生成完了。以下を控えてください。")
-                # 鍵を別々に表示
-                st.write("---")
                 st.write("**公開鍵 n:**", n)
                 st.write("**公開鍵 e:**", e_val)
                 st.write("**秘密鍵 d:**", d)
-                d = mod_inverse(e_val, phi)
-                st.session_state.update({'n': n, 'e': e_val, 'd': d})
-                st.success(f"鍵生成完了: n={n}, e={e_val}, d={d}")
-    n_in = st.text_input("公開鍵 n 入力", key='n2')
-    e_in = st.text_input("公開指数 e 入力", key='e2')
-    plain1 = st.text_input("平文 (A-Z、最大5)", key='plain1')
+
+    # 暗号化ステップ
+    st.subheader("2. 暗号化（1人モード）")
+    n_enc = st.text_input("公開鍵 n を入力", key='n_enc1')
+    e_enc = st.text_input("公開指数 e を入力", key='e_enc1')
+    plain1 = st.text_input("平文 (A-Z、最大5文字)", key='plain1')
     if st.button("暗号化（1人）"):
-        if not n_in or not e_in or not plain1:
+        if not n_enc or not e_enc or not plain1:
             st.error("公開鍵・指数・平文を入力してください。")
         else:
             try:
-                n = int(n_in); e = int(e_in)
+                n = int(n_enc); e = int(e_enc)
             except:
                 st.error("公開鍵・指数は数字で入力してください。")
                 st.stop()
@@ -182,25 +181,32 @@ elif role == "一人で行う":
             st.subheader("暗号文 (Base64)")
             st.code(b64)
             st.session_state['cipher_str'] = b64
+
+    # 復号ステップ（フォーム）
+    st.subheader("3. 復号（1人モード）")
+    n_dec = st.text_input("公開鍵 n を入力", key='n_dec1')
+    d_dec = st.text_input("秘密鍵 d を入力", key='d_dec1')
+    cipher1 = st.text_area("暗号文 (Base64)", value=st.session_state.get('cipher_str', ''), key='cipher1')
     if st.button("復号（1人）"):
-        n_in2 = st.text_input("秘密鍵 d 入力", key='d2')
-        cipher2 = st.session_state.get('cipher_str','')
-        if not n_in or not n_in2 or not cipher2:
-            st.error("公開鍵または秘密鍵または暗号文が不足しています。")
+        if not n_dec or not d_dec or not cipher1:
+            st.error("公開鍵・秘密鍵・暗号文を入力してください。")
         else:
             try:
-                n = int(n_in); d = int(n_in2)
+                n = int(n_dec); d = int(d_dec)
             except:
                 st.error("鍵は数字で入力してください。")
                 st.stop()
-            b64 = cipher2
-            pad = (-len(b64)) % 4
-            b64 += '=' * pad
-            cb = base64.urlsafe_b64decode(b64)
-            size = (n.bit_length() + 7) // 8
-            msg = ''
-            for i in range(0, len(cb), size):
-                block = cb[i:i+size]
-                m = pow(int.from_bytes(block, 'big'), d, n)
-                msg += chr(m + 65)
-            st.success(f"復号結果: {msg}")
+            try:
+                b64 = cipher1.strip()
+                pad = (-len(b64)) % 4
+                b64 += '=' * pad
+                cb = base64.urlsafe_b64decode(b64)
+                size = (n.bit_length() + 7) // 8
+                msg = ''
+                for i in range(0, len(cb), size):
+                    block = cb[i:i+size]
+                    m = pow(int.from_bytes(block, 'big'), d, n)
+                    msg += chr(m + 65)
+                st.success(f"復号結果: {msg}")
+            except:
+                st.error("復号に失敗しました。鍵と暗号文を確認してください。")
