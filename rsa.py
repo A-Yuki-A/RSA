@@ -98,8 +98,28 @@ if role == "一人で行う":
     e_enc = st.text_input("公開鍵 e を入力", "", key='e_enc1')
     plain1 = st.text_input("平文 (A-Z、最大5文字)", "", key='plain1')
     if st.button("暗号化（1人）"):
-        # ... 暗号化ロジック省略 ...
-        pass
+        if not n_enc or not e_enc or not plain1:
+            st.error("公開鍵・指数・平文を入力してください。")
+        else:
+            try:
+                n_val = int(n_enc)
+                e_val = int(e_enc)
+            except ValueError:
+                st.error("公開鍵と指数は数字で入力してください。")
+                st.stop()
+            if not plain1.isupper() or len(plain1) == 0:
+                st.error("平文は大文字アルファベット5文字以内で入力してください。")
+            else:
+                byte_size = (n_val.bit_length() + 7) // 8
+                cipher_bytes = b''
+                for c in plain1:
+                    m = ord(c) - 65
+                    c_i = pow(m, e_val, n_val)
+                    cipher_bytes += c_i.to_bytes(byte_size, 'big')
+                b64 = base64.b64encode(cipher_bytes).decode('ascii')
+                st.subheader("暗号文 (Base64)")
+                st.code(b64)
+                st.session_state['cipher_str'] = b64
 
     st.subheader("3. 復号")
     # 初期値空欄にしてコピペ可能
@@ -107,5 +127,24 @@ if role == "一人で行う":
     d_dec = st.text_input("秘密鍵 d を入力", "", key='d_dec1')
     cipher1 = st.text_area("暗号文 (Base64)", "", key='cipher1')
     if st.button("復号（1人）"):
-        # ... 復号ロジック省略 ...
-        pass
+        if not n_dec or not d_dec or not cipher1:
+            st.error("公開鍵・秘密鍵・暗号文を入力してください。")
+        else:
+            try:
+                n_val = int(n_dec)
+                d_val = int(d_dec)
+            except ValueError:
+                st.error("公開鍵と秘密鍵は数字で入力してください。")
+                st.stop()
+            try:
+                cipher_bytes = base64.b64decode(cipher1)
+                byte_size = (n_val.bit_length() + 7) // 8
+                chars = []
+                for i in range(0, len(cipher_bytes), byte_size):
+                    block = cipher_bytes[i:i+byte_size]
+                    c_i = int.from_bytes(block, 'big')
+                    m = pow(c_i, d_val, n_val)
+                    chars.append(chr(m + 65))
+                st.success(f"復号結果: {''.join(chars)}")
+            except Exception:
+                st.error("復号に失敗しました。鍵と暗号文を確認してください。")
