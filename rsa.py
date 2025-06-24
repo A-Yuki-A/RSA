@@ -177,6 +177,7 @@ elif role == "一人で行う":
                 st.session_state['n'] = n_val
                 st.session_state['e'] = e_val
                 st.session_state['d'] = d_val
+                # 正しい st.success の呼び出しのみ
                 st.success("鍵生成完了。以下の値を控えてください。")({'n': n_val, 'e': e_val, 'd': d_val})
                 st.success("鍵生成完了。以下の値を控えてください。")
     if st.session_state.get('generated_1'):
