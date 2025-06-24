@@ -94,23 +94,26 @@ if role == "送信者":
 # 受信者の画面
 elif role == "受信者":
     st.header("3. 復号（受信者）")
-    st.text_input("公開鍵 n", value=st.session_state.get('n', 0), disabled=True)
-    st.text_input("公開指数 e", value=st.session_state.get('e', 0), disabled=True)
-    d_input = st.number_input("秘密鍵 d", value=st.session_state.get('d', 0), step=1)
+    # 公開鍵を送信者からコピー・貼り付け
+    n_input = st.text_input("公開鍵 n を貼り付けてください", value="")
+    e_input = st.text_input("公開指数 e を貼り付けてください", value="")
+    d_input = st.text_input("秘密鍵 d を貼り付けてください", value="")
     cipher_input = st.text_area("暗号文 (Base64)")
     if st.button("復号"):
-        if st.session_state['n'] == 0:
-            st.error("まず送信者に鍵生成と暗号化を行ってもらってください。")
-        else:
-            try:
-                cipher_bytes = base64.b64decode(cipher_input)
-                byte_size = (st.session_state['n'].bit_length() + 7) // 8
-                chars = []
-                for i in range(0, len(cipher_bytes), byte_size):
-                    block = cipher_bytes[i:i+byte_size]
-                    c_i = int.from_bytes(block, 'big')
-                    m_i = pow(c_i, d_input, st.session_state['n'])
-                    chars.append(chr(m_i + 65))
-                st.write("復号結果：", ''.join(chars))
-            except Exception:
-                st.error("有効なBase64文字列を入力してください。")
+        try:
+            n = int(n_input)
+            e = int(e_input)  # e は使わないが入力欄を用意
+            d = int(d_input)
+            cipher_bytes = base64.b64decode(cipher_input)
+            byte_size = (n.bit_length() + 7) // 8
+            chars = []
+            for i in range(0, len(cipher_bytes), byte_size):
+                block = cipher_bytes[i:i+byte_size]
+                c_i = int.from_bytes(block, 'big')
+                m_i = pow(c_i, d, n)
+                chars.append(chr(m_i + 65))
+            st.write("復号結果：", ''.join(chars))
+        except ValueError:
+            st.error("数値フィールドに有効な数字を入力してください。")
+        except Exception:
+            st.error("復号に失敗しました。Base64文字列と鍵を確認してください。")
