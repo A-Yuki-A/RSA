@@ -74,7 +74,6 @@ if role == "受信者":
                 d = mod_inverse(e, phi)
                 st.session_state.update({'n': n, 'e': e, 'd': d})
                 st.success("鍵生成完了。以下を控えてください。")
-                # コピー可能なコードブロックで表示
                 st.code(f"公開鍵 n: {n}", language='')
                 st.code(f"公開鍵 e: {e}", language='')
                 st.code(f"秘密鍵 d: {d}", language='')
@@ -134,7 +133,8 @@ elif role == "送信者":
 
 # --- 一人で行うモード ---
 elif role == "一人で行う":
-    st.header("1. 鍵生成 → 2. 暗号化 → 3. 復号（1人モード）")
+    st.header("1. 鍵生成 → 2. 暗号化 → 3. 復号")
+    st.caption("p, q, e はすべて異なる素数を選んでください。")
     # 鍵生成
     p_col, q_col, e_col = st.columns(3)
     with p_col:
@@ -160,7 +160,7 @@ elif role == "一人で行う":
                 st.code(f"秘密鍵 d: {d}", language='')
 
     # 暗号化ステップ
-    st.subheader("2. 暗号化（1人モード）")
+    st.subheader("2. 暗号化（一人モード）")
     n_enc = st.text_input("公開鍵 n を入力", key='n_enc1')
     e_enc = st.text_input("公開指数 e を入力", key='e_enc1')
     plain1 = st.text_input("平文 (A-Z、最大5文字)", key='plain1')
@@ -183,7 +183,7 @@ elif role == "一人で行う":
             st.session_state['cipher_str'] = b64
 
     # 復号ステップ（フォーム）
-    st.subheader("3. 復号（1人モード）")
+    st.subheader("3. 復号（一人モード）")
     n_dec = st.text_input("公開鍵 n を入力", key='n_dec1')
     d_dec = st.text_input("秘密鍵 d を入力", key='d_dec1')
     cipher1 = st.text_area("暗号文 (Base64)", value=st.session_state.get('cipher_str', ''), key='cipher1')
