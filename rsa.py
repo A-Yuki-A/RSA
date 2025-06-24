@@ -84,9 +84,14 @@ if role == "受信者":
         cols[0].write("秘密鍵 d (受信者のみ)" )
         cols[1].code(str(st.session_state['d']))
     st.header("2. 復号（受信者）")
-    n_in = st.text_input("公開鍵 n", "")
-    d_in = st.text_input("秘密鍵 d", "")
-    c_in = st.text_area("暗号文 (Base64)")
+    # 復号用入力フォームを横並びに
+    dec_cols = st.columns(3)
+    with dec_cols[0]:
+        n_in = st.text_input("公開鍵 n", "", key='n_in_recv')
+    with dec_cols[1]:
+        d_in = st.text_input("秘密鍵 d", "", key='d_in_recv')
+    with dec_cols[2]:
+        c_in = st.text_area("暗号文 (Base64)", "", key='c_in_recv')
     if st.button("復号（受信者）"):
         if not n_in or not d_in or not c_in:
             st.error("全て入力してください。")
