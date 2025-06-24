@@ -153,6 +153,14 @@ elif role == "一人で行う":
                 n = p_val * q_val
                 d = mod_inverse(e_val, phi)
                 st.session_state.update({'n': n, 'e': e_val, 'd': d})
+                st.success("鍵生成完了。以下を控えてください。")
+                # 鍵を別々に表示
+                st.write("---")
+                st.write("**公開鍵 n:**", n)
+                st.write("**公開鍵 e:**", e_val)
+                st.write("**秘密鍵 d:**", d)
+                d = mod_inverse(e_val, phi)
+                st.session_state.update({'n': n, 'e': e_val, 'd': d})
                 st.success(f"鍵生成完了: n={n}, e={e_val}, d={d}")
     n_in = st.text_input("公開鍵 n 入力", key='n2')
     e_in = st.text_input("公開指数 e 入力", key='e2')
