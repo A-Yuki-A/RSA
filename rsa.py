@@ -1,4 +1,5 @@
 import streamlit as st
+import base64
 
 # ---- ヘルパー関数 ----
 def generate_primes(n):
@@ -30,7 +31,7 @@ primes = [p for p in all_primes if 5000 <= p <= 6000]
 
 # ---- セッションステート初期化 ----
 if 'n' not in st.session_state:
-    st.session_state.update({'n': 0, 'e': 0, 'd': 0})
+    st.session_state.update({'n': 0, 'e': 0, 'd': 0, 'cipher_str': ''})
 
 st.title("RSA 暗号シミュレータ（一文字ずつ暗号化）")
 
@@ -49,7 +50,6 @@ with col2:
     q = st.selectbox("素数 q", primes, index=1)
 with col3:
     e = st.selectbox("公開鍵指数 e", primes, index=4)
-
 if st.button("鍵生成"):
     phi = (p - 1) * (q - 1)
     if gcd(e, phi) != 1:
@@ -62,49 +62,51 @@ if st.button("鍵生成"):
         st.success(f"公開鍵 (n, e) = ({st.session_state.n}, {st.session_state.e})")
         st.success(f"秘密鍵 d = {st.session_state.d}")
 
-# 2. 暗号化（一文字ずつ）
+# 2. 暗号化（一文字ずつ、Base64文字列出力）
 st.header("2. 暗号化（動的に表示される鍵を使用）")
-# 鍵の表示
 st.write("現在の公開鍵 n:", st.session_state.n)
 st.write("現在の公開鍵 e:", st.session_state.e)
 plain = st.text_input("平文（大文字5文字以内）", max_chars=5, key="plain")
-
 if st.button("暗号化", key="enc"):
     if st.session_state.n == 0:
         st.error("先に鍵生成を行ってください。")
-    elif not plain.isupper():
+    elif not plain.isupper() or len(plain) == 0:
         st.error("大文字アルファベットで入力してください。")
     else:
-        cipher_list = []
+        # 1文字ずつ暗号化してバイト列を結合
+        byte_size = (st.session_state.n.bit_length() + 7) // 8
+        cipher_bytes = b''
         for c in plain:
             m_i = ord(c) - 65
             c_i = pow(m_i, st.session_state.e, st.session_state.n)
-            cipher_list.append(c_i)
-        st.session_state.cipher_list = cipher_list
-        st.write("暗号文（数値リスト）:", cipher_list)
+            cipher_bytes += c_i.to_bytes(byte_size, 'big')
+        # Base64 文字列化
+        b64 = base64.b64encode(cipher_bytes).decode('ascii')
+        st.session_state.cipher_str = b64
+        st.write("暗号文 (Base64文字列):")
+        st.code(b64)
 
-# 3. 復号（一文字ずつ）
+# 3. 復号（Base64文字列入力）
 st.header("3. 復号（動的に表示される鍵を使用）")
-# 鍵の表示
 st.write("現在の公開鍵 n:", st.session_state.n)
 st.write("現在の秘密鍵 d:", st.session_state.d)
 
-if 'cipher_list' in st.session_state:
-    cipher_input = ",".join(str(x) for x in st.session_state.cipher_list)
-else:
-    cipher_input = ''
-cipher = st.text_area("暗号文（数値リストをカンマ区切りで編集可）", value=cipher_input)
-
+cipher_input = st.text_area("暗号文 (Base64文字列)", value=st.session_state.cipher_str)
 if st.button("復号", key="dec"):
     if st.session_state.n == 0:
         st.error("先に鍵生成と暗号化を行ってください。")
     else:
         try:
-            nums = [int(x.strip()) for x in cipher.split(',')]
-            plain_chars = []
-            for c_i in nums:
+            # Base64→バイト列
+            cipher_bytes = base64.b64decode(cipher_input)
+            byte_size = (st.session_state.n.bit_length() + 7) // 8
+            # バイト列を byte_size ごとに分割して復号
+            chars = []
+            for i in range(0, len(cipher_bytes), byte_size):
+                block = cipher_bytes[i:i+byte_size]
+                c_i = int.from_bytes(block, 'big')
                 m_i = pow(c_i, st.session_state.d, st.session_state.n)
-                plain_chars.append(chr(m_i + 65))
-            st.write("復号結果:", ''.join(plain_chars))
-        except:
-            st.error("暗号文の形式が正しくありません。数値をカンマ区切りで入力してください。")
+                chars.append(chr(m_i + 65))
+            st.write("復号結果:", ''.join(chars))
+        except Exception:
+            st.error("暗号文の形式が正しくありません。有効なBase64文字列を入力してください。")
