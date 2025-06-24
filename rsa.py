@@ -83,15 +83,11 @@ if role == "受信者":
         if not n_val or not d_val or not cipher_input.strip():
             st.error("公開鍵・秘密鍵・暗号文をすべて入力してください。")
         else:
-            # 鍵が数字か確認
             try:
-                n = int(n_val)
-                d = int(d_val)
+                n = int(n_val); d = int(d_val)
             except ValueError:
                 st.error("公開鍵と秘密鍵は数字で入力してください。")
-                # 処理を中断
                 st.stop()
-            # Base64デコードと復号
             try:
                 b64 = cipher_input.strip()
                 pad_len = (-len(b64)) % 4
@@ -106,6 +102,8 @@ if role == "受信者":
                 st.success(f"復号結果: {msg}")
             except Exception:
                 st.error("復号に失敗しました。公開鍵・秘密鍵・暗号文を確認してください。")
+
+# --- 送信者モード ---
 elif role == "送信者":
     st.header("1. 暗号化（送信者）")
     n_input = st.text_input("受信者から受け取った公開鍵 n", value="")
@@ -113,13 +111,12 @@ elif role == "送信者":
     plain = st.text_input("平文 (A-Z、最大5文字)", max_chars=5)
     if st.button("暗号化（送信者）"):
         try:
-            n = int(n_input)
-            e = int(e_input)
+            n = int(n_input); e = int(e_input)
             size = (n.bit_length() + 7) // 8
             ciphertext = b''
             for c in plain:
                 m = ord(c) - 65
-                ciphertext += pow(m, e, n).to_bytes(size,'big')
+                ciphertext += pow(m, e, n).to_bytes(size, 'big')
             b64 = base64.urlsafe_b64encode(ciphertext).decode().rstrip('=')
             st.subheader("暗号文 (Base64)")
             st.code(b64)
@@ -129,47 +126,59 @@ elif role == "送信者":
 
 # --- 一人で行うモード ---
 elif role == "一人で行う":
-    st.header("1. 鍵生成 → 2. 暗号化 → 3. 復号")
+    st.header("1. 鍵生成 → 2. 暗号化 → 3. 復号（1人モード）")
     # 鍵生成
-    p, q, e = st.columns(3)
-    with p:
+    p_col, q_col, e_col = st.columns(3)
+    with p_col:
         p_val = st.selectbox("素数 p", primes, key='p1')
-    with q:
+    with q_col:
         q_val = st.selectbox("素数 q", primes, key='q1')
-    with e:
+    with e_col:
         e_val = st.selectbox("公開指数 e", primes, key='e1')
     if st.button("鍵生成（1人）"):
-        phi = (p_val-1)*(q_val-1)
-        if gcd(e_val,phi)!=1:
+        phi = (p_val - 1) * (q_val - 1)
+        if gcd(e_val, phi) != 1:
             st.error("e は φ(n) と互いに素である必要があります。")
         else:
-            st.session_state.update({'n':p_val*q_val,'e':e_val,'d':mod_inverse(e_val,phi)})
-            st.success(f"n={st.session_state['n']}, e={st.session_state['e']}, d={st.session_state['d']}")
+            n = p_val * q_val
+            d = mod_inverse(e_val, phi)
+            st.session_state.update({'n': n, 'e': e_val, 'd': d})
+            st.success(f"鍵生成完了: n={n}, e={e_val}, d={d}")
     # 暗号化
     plain1 = st.text_input("平文 (A-Z、最大5文字)", key='plain1')
     if st.button("暗号化（1人）"):
-        try:
-            n, e = st.session_state['n'], st.session_state['e']
-            size=(n.bit_length()+7)//8
-            ct=b''
-            for c in plain1:
-                ct+=pow(ord(c)-65, e, n).to_bytes(size,'big')
-            b64=base64.urlsafe_b64encode(ct).decode().rstrip('=')
-            st.session_state['cipher_str']=b64
-            st.code(b64)
-        except:
-            st.error("鍵と平文を確認してください。")
-    # 復号
-    if 'cipher_str' in st.session_state and st.session_state['cipher_str']:
-        if st.button("復号（1人）"):
+        if st.session_state['n'] == 0:
+            st.error("先に鍵生成を実行してください。")
+        else:
             try:
-                n, d = st.session_state['n'], st.session_state['d']
-                cb=base64.urlsafe_b64decode(st.session_state['cipher_str']+'==')
-                size=(n.bit_length()+7)//8
-                msg=''
-                for i in range(0,len(cb),size):
-                    m=pow(int.from_bytes(cb[i:i+size],'big'), d, n)
-                    msg+=chr(m+65)
-                st.write(f"復号結果: {msg}")
+                n = st.session_state['n']; e = st.session_state['e']
+                size = (n.bit_length() + 7) // 8
+                ct = b''
+                for c in plain1:
+                    ct += pow(ord(c) - 65, e, n).to_bytes(size, 'big')
+                b64 = base64.urlsafe_b64encode(ct).decode().rstrip('=')
+                st.subheader("暗号文 (Base64)")
+                st.code(b64)
+                st.session_state['cipher_str'] = b64
             except:
-                st.error("復号失敗。データを確認してください。")
+                st.error("暗号化に失敗しました。")
+    # 復号
+    if st.button("復号（1人）"):
+        if st.session_state['n'] == 0:
+            st.error("先に鍵生成と暗号化を実行してください。")
+        else:
+            try:
+                n = st.session_state['n']; d = st.session_state['d']
+                b64 = st.session_state['cipher_str']
+                pad_len = (-len(b64)) % 4
+                b64 += '=' * pad_len
+                cb = base64.urlsafe_b64decode(b64)
+                size = (n.bit_length() + 7) // 8
+                msg = ''
+                for i in range(0, len(cb), size):
+                    block = cb[i:i+size]
+                    m = pow(int.from_bytes(block, 'big'), d, n)
+                    msg += chr(m + 65)
+                st.success(f"復号結果: {msg}")
+            except:
+                st.error("復号に失敗しました。データを確認してください。")
