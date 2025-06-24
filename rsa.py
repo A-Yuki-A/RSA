@@ -2,11 +2,11 @@ import streamlit as st
 
 # ---- ヘルパー関数 ----
 def generate_primes(n):
-    sieve = [True]*(n+1)
+    sieve = [True] * (n + 1)
     sieve[0:2] = [False, False]
-    for i in range(2, int(n**0.5)+1):
+    for i in range(2, int(n**0.5) + 1):
         if sieve[i]:
-            for j in range(i*i, n+1, i):
+            for j in range(i*i, n + 1, i):
                 sieve[j] = False
     return [i for i, ok in enumerate(sieve) if ok]
 
@@ -24,9 +24,10 @@ def mod_inverse(a, m):
     x, _, g = egcd(a, m)
     return x % m if g == 1 else None
 
-# ---- 素数リスト ----
-primes = generate_primes(50000)
-primes_small = [p for p in primes if p <= 1000]
+# ---- 素数リスト（5000～6000） ----
+all_primes = generate_primes(6000)
+primes = [p for p in all_primes if 5000 <= p <= 6000]
+primes_small = [p for p in generate_primes(6000) if p <= 1000]
 
 # ---- セッションステート初期化 ----
 if 'n' not in st.session_state:
@@ -34,6 +35,7 @@ if 'n' not in st.session_state:
 
 st.title("RSA 暗号シミュレータ（一文字ずつ暗号化）")
 
+# ---- 鍵の説明 ----
 st.markdown("""
 **公開鍵 (n, e)**  
 - 平文を暗号化する鍵（みんなに公開）  
@@ -43,14 +45,14 @@ st.markdown("""
 """)
 
 # 1. 鍵作成
-st.header("1. 鍵の作成（素数 p, q は 3 ～ 50000）")
+st.header("1. 鍵の作成（素数 p, q は 5000～6000 の間）")
 col1, col2, col3 = st.columns(3)
 with col1:
-    p = st.selectbox("素数 p", primes, index=primes.index(32507))
+    p = st.selectbox("素数 p", primes, index=0)
 with col2:
-    q = st.selectbox("素数 q", primes, index=primes.index(32713))
+    q = st.selectbox("素数 q", primes, index=1)
 with col3:
-    e = st.selectbox("公開鍵指数 e", primes_small, index=primes_small.index(5))
+    e = st.selectbox("公開鍵指数 e", primes_small, index=4)
 
 if st.button("鍵を作成"):
     phi = (p-1)*(q-1)
@@ -67,7 +69,7 @@ if st.button("鍵を作成"):
 # 2. 暗号化（一文字ずつ）
 st.header("2. 暗号化（大文字 A–Z のみ）")
 n_enc = st.session_state.n
-e_enc = st.session_state.e
+ne = st.session_state.e
 plain = st.text_input("平文（大文字5文字以内）", max_chars=5)
 
 if st.button("暗号化", key="enc"):
@@ -78,8 +80,8 @@ if st.button("暗号化", key="enc"):
     else:
         cipher_list = []
         for c in plain:
-            m_i = ord(c) - 65        # A→0, B→1, …  
-            c_i = pow(m_i, e_enc, n_enc)
+            m_i = ord(c) - 65
+            c_i = pow(m_i, ne, n_enc)
             cipher_list.append(c_i)
         st.write("暗号文（数値リスト）：", cipher_list)
 
