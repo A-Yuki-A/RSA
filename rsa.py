@@ -177,8 +177,8 @@ elif role == "一人で行う":
         st.columns([2,3])[1].code(str(d_val))
 
     st.subheader("2. 暗号化")
-    n_enc = st.text_input("公開鍵 n を入力", key='n_enc1')
-    e_enc = st.text_input("公開鍵 e を入力", key='e_enc1')
+    n_enc = st.text_input("公開鍵 n を入力", value=str(st.session_state.get('n','')), key='n_enc1')
+    e_enc = st.text_input("公開鍵 e を入力", value=str(st.session_state.get('e','')), key='e_enc1')
     plain1 = st.text_input("平文 (A-Z、最大5文字)", key='plain1')
     if st.button("暗号化（1人）"):
         if not n_enc or not e_enc or not plain1:
@@ -197,8 +197,8 @@ elif role == "一人で行う":
             st.session_state['cipher_str'] = b64
 
     st.subheader("3. 復号")
-    n_dec = st.text_input("公開鍵 n を入力", key='n_dec1')
-    d_dec = st.text_input("秘密鍵 d を入力", key='d_dec1')
+    n_dec = st.text_input("公開鍵 n を入力", value=str(st.session_state.get('n','')), key='n_dec1')
+    d_dec = st.text_input("秘密鍵 d を入力", value=str(st.session_state.get('d','')), key='d_dec1')
     cipher1 = st.text_area("暗号文 (Base64)", value=st.session_state['cipher_str'], key='cipher1')
     if st.button("復号（1人）"):
         if not n_dec or not d_dec or not cipher1:
