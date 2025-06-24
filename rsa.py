@@ -34,14 +34,10 @@ for key in ('n','e','d','cipher_str'):
     if key not in st.session_state:
         st.session_state[key] = 0 if key!='cipher_str' else ''
 
-# ---- タイトル ----
 st.title("CipherLink")
-
-# ---- 役割選択 ----
 st.subheader("役割を選択してください")
 role = st.radio("", ["受信者","送信者","一人で行う"])
 
-# ---- 説明 ----
 st.markdown(
     """
 このツールはRSA暗号の流れを学ぶためのものです。
@@ -51,7 +47,6 @@ st.markdown(
 """
 )
 
-# --- 受信者モード ---
 if role == "受信者":
     st.header("1. 鍵生成（受信者）")
     st.caption("p, q, e はすべて異なる素数を選んでください。")
@@ -74,12 +69,13 @@ if role == "受信者":
                 d = mod_inverse(e, phi)
                 st.session_state.update({'n': n, 'e': e, 'd': d})
                 st.success("鍵生成完了。以下を控えてください。")
+                # コピー可能な数値表示
                 st.markdown("公開鍵 n:")
-st.code(str(n))))
+                st.code(str(n))
                 st.markdown("公開鍵 e:")
-st.code(str(e))))
+                st.code(str(e))
                 st.markdown("秘密鍵 d:")
-st.code(str(d))))
+                st.code(str(d))
 
     st.header("2. 復号（受信者）")
     n_input = st.text_input("公開鍵 n を入力", "")
@@ -90,8 +86,9 @@ st.code(str(d))))
             st.error("公開鍵・秘密鍵・暗号文をすべて入力してください。")
         else:
             try:
-                n = int(n_input); d = int(d_input)
-            except:
+                n = int(n_input)
+                d = int(d_input)
+            except ValueError:
                 st.error("公開鍵と秘密鍵は数字で入力してください。")
                 st.stop()
             try:
@@ -100,16 +97,15 @@ st.code(str(d))))
                 b64 += "=" * pad
                 cb = base64.urlsafe_b64decode(b64)
                 size = (n.bit_length() + 7) // 8
-                msg = ""
+                msg = ''
                 for i in range(0, len(cb), size):
                     block = cb[i:i+size]
                     m = pow(int.from_bytes(block, 'big'), d, n)
                     msg += chr(m + 65)
                 st.success(f"復号結果: {msg}")
-            except:
+            except Exception:
                 st.error("復号に失敗しました。鍵と暗号文を確認してください。")
 
-# --- 送信者モード ---
 elif role == "送信者":
     st.header("1. 暗号化（送信者）")
     n_input = st.text_input("公開鍵 n を入力", "")
@@ -120,8 +116,9 @@ elif role == "送信者":
             st.error("公開鍵・指数・平文をすべて入力してください。")
         else:
             try:
-                n = int(n_input); e = int(e_input)
-            except:
+                n = int(n_input)
+                e = int(e_input)
+            except ValueError:
                 st.error("公開鍵と指数は数字で入力してください。")
                 st.stop()
             size = (n.bit_length() + 7) // 8
@@ -134,11 +131,9 @@ elif role == "送信者":
             st.code(b64)
             st.session_state['cipher_str'] = b64
 
-# --- 一人で行うモード ---
 elif role == "一人で行う":
     st.header("1. 鍵生成 → 2. 暗号化 → 3. 復号")
     st.caption("p, q, e はすべて異なる素数を選んでください。")
-    # 鍵生成
     p_col, q_col, e_col = st.columns(3)
     with p_col:
         p_val = st.selectbox("素数 p", primes, key='p1')
@@ -158,12 +153,14 @@ elif role == "一人で行う":
                 d = mod_inverse(e_val, phi)
                 st.session_state.update({'n': n, 'e': e_val, 'd': d})
                 st.success("鍵生成完了。以下を控えてください。")
-                st.write("公開鍵 n:", st.code(str(n)))
-                st.write("公開鍵 e:", st.code(str(e_val)))
-                st.write("秘密鍵 d:", st.code(str(d)))
+                st.markdown("公開鍵 n:")
+                st.code(str(n))
+                st.markdown("公開鍵 e:")
+                st.code(str(e_val))
+                st.markdown("秘密鍵 d:")
+                st.code(str(d))
 
-    # 暗号化ステップ
-    st.subheader("2. 暗号化（一人モード）")
+    st.subheader("2. 暗号化")
     n_enc = st.text_input("公開鍵 n を入力", key='n_enc1')
     e_enc = st.text_input("公開指数 e を入力", key='e_enc1')
     plain1 = st.text_input("平文 (A-Z、最大5文字)", key='plain1')
@@ -172,8 +169,9 @@ elif role == "一人で行う":
             st.error("公開鍵・指数・平文を入力してください。")
         else:
             try:
-                n = int(n_enc); e = int(e_enc)
-            except:
+                n = int(n_enc)
+                e = int(e_enc)
+            except ValueError:
                 st.error("公開鍵・指数は数字で入力してください。")
                 st.stop()
             size = (n.bit_length() + 7) // 8
@@ -182,21 +180,21 @@ elif role == "一人で行う":
                 ct += pow(ord(c) - 65, e, n).to_bytes(size, 'big')
             b64 = base64.urlsafe_b64encode(ct).decode().rstrip('=')
             st.subheader("暗号文 (Base64)")
-            st. code(b64)
+            st.code(b64)
             st.session_state['cipher_str'] = b64
 
-    # 復号ステップ（フォーム）
-    st.subheader("3. 復号（一人モード）")
+    st.subheader("3. 復号")
     n_dec = st.text_input("公開鍵 n を入力", key='n_dec1')
     d_dec = st.text_input("秘密鍵 d を入力", key='d_dec1')
-    cipher1 = st.text_area("暗号文 (Base64)", value=st.session_state.get('cipher_str', ''), key='cipher1')
+    cipher1 = st.text_area("暗号文 (Base64)", value=st.session_state.get('cipher_str',''), key='cipher1')
     if st.button("復号（1人）"):
         if not n_dec or not d_dec or not cipher1:
             st.error("公開鍵・秘密鍵・暗号文を入力してください。")
         else:
             try:
-                n = int(n_dec); d = int(d_dec)
-            except:
+                n = int(n_dec)
+                d = int(d_dec)
+            except ValueError:
                 st.error("鍵は数字で入力してください。")
                 st.stop()
             try:
@@ -211,5 +209,5 @@ elif role == "一人で行う":
                     m = pow(int.from_bytes(block, 'big'), d, n)
                     msg += chr(m + 65)
                 st.success(f"復号結果: {msg}")
-            except:
+            except Exception:
                 st.error("復号に失敗しました。鍵と暗号文を確認してください。")
