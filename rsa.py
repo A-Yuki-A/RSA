@@ -37,7 +37,7 @@ for key in ('n','e','d','cipher_str','generated','generated_1','p1_val','q1_val'
 # ---- アプリタイトル／役割選択 ----
 st.title("CipherLink")
 st.subheader("役割を選択してください")
-role = st.radio("", ["受信者","送信者","一人で行う"])
+role = st.radio("", ["受信者","送信者","一人で行う"], horizontal=True) ["受信者","送信者","一人で行う"])
 
 st.markdown(
     """
@@ -93,10 +93,14 @@ if role == "一人で行う":
         cols[1].code(str(d_val))
 
     st.subheader("2. 暗号化")
-    # 生徒がコピー＆貼り付け用: 初期値空欄
-    n_enc = st.text_input("公開鍵 n を入力", "", key='n_enc1')
-    e_enc = st.text_input("公開鍵 e を入力", "", key='e_enc1')
-    plain1 = st.text_input("平文 (A-Z、最大5文字)", "", key='plain1')
+    # 生徒がコピー＆貼り付け用: 初期値空欄で横並び
+    enc_cols = st.columns(3)
+    with enc_cols[0]:
+        n_enc = st.text_input("公開鍵 n を入力", "", key='n_enc1')
+    with enc_cols[1]:
+        e_enc = st.text_input("公開鍵 e を入力", "", key='e_enc1')
+    with enc_cols[2]:
+        plain1 = st.text_input("平文 (A-Z、最大5文字)", "", key='plain1')
     if st.button("暗号化（1人）"):
         if not n_enc or not e_enc or not plain1:
             st.error("公開鍵・指数・平文を入力してください。")
