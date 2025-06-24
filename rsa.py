@@ -160,10 +160,11 @@ elif role == "一人で行う":
     with e_col:
         e_val = st.selectbox("公開鍵 e", primes, key='e1')
     if st.button("鍵生成（1人）"):
+        # フラグと素数保存（widget key と衝突しない名前を使用）
         st.session_state['generated_1'] = True
-        st.session_state['p1'] = p_val
-        st.session_state['q1'] = q_val
-        st.session_state['e1'] = e_val
+        st.session_state['p1_val'] = p_val
+        st.session_state['q1_val'] = q_val
+        st.session_state['e1_val'] = e_val
         if p_val == q_val or p_val == e_val or q_val == e_val:
             st.error("p, q, e はすべて異なる値である必要があります。")
         else:
@@ -173,13 +174,23 @@ elif role == "一人で行う":
             else:
                 n_val = p_val * q_val
                 d_val = mod_inverse(e_val, phi)
-                st.session_state.update({'n': n_val, 'e': e_val, 'd': d_val})
+                st.session_state['n'] = n_val
+                st.session_state['e'] = e_val
+                st.session_state['d'] = d_val
+                st.success("鍵生成完了。以下の値を控えてください。")({'n': n_val, 'e': e_val, 'd': d_val})
                 st.success("鍵生成完了。以下の値を控えてください。")
     if st.session_state.get('generated_1'):
+        # 一人モード鍵情報表示
         col_n_label, col_n_code = st.columns([2,3])
         col_n_label.write("公開鍵 n (n = p × q)")
-        col_n_label.caption(f"p={st.session_state['p1']}, q={st.session_state['q1']}")
+        col_n_label.caption(f"p={st.session_state['p1_val']}, q={st.session_state['q1_val']}")
         col_n_code.code(str(st.session_state['n']))
+        col_e_label, col_e_code = st.columns([2,3])
+        col_e_label.write("公開鍵 e")
+        col_e_code.code(str(st.session_state['e1_val']))
+        col_d_label, col_d_code = st.columns([2,3])
+        col_d_label.write("秘密鍵 d (受信者のみが持つ鍵)")
+        col_d_code.code(str(st.session_state['d']))
         col_e_label, col_e_code = st.columns([2,3])
         col_e_label.write("公開鍵 e")
         col_e_code.code(str(st.session_state['e']))
