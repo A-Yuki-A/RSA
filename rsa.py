@@ -29,126 +29,167 @@ def mod_inverse(a, m):
 all_primes = generate_primes(6000)
 primes = [p for p in all_primes if 5000 <= p <= 6000]
 
-# ---- セッションステート初期化 ----
-for key in ('n','e','d','cipher_str','generated','generated_1','p1_val','q1_val','e1_val'):
+# ---- セッション状態初期化 ----
+for key in ('n','e','d','cipher_str','done_recv','done_send','done_solo'):
     if key not in st.session_state:
-        st.session_state[key] = False if key.startswith('generated') else (0 if key in ('n','e','d') else "")
+        st.session_state[key] = False
 
-# ---- アプリタイトル／役割選択 ----
 st.title("CipherLink")
 st.subheader("役割を選択してください")
 role = st.radio("", ["受信者","送信者","一人で行う"], horizontal=True)
 
+# 共通説明
 st.markdown(
     """
 このツールはRSA暗号の流れを学ぶためのものです。
-- **受信者**: 鍵生成→公開鍵を送信者に渡す→暗号文を復号します。
-- **送信者**: 公開鍵を受け取り→メッセージを暗号化します。
-- **一人で行う**: すべてのステップをひとりで体験できます。
+- **受信者**: 鍵生成し公開鍵を渡し、暗号文を復号。
+- **送信者**: 受信者から公開鍵を受け取り暗号化。
+- **一人で行う**: すべてのステップを一人で実行。
 """
 )
 
-# --- 一人で行うモード ---
-if role == "一人で行う":
-    st.header("1. 鍵生成 → 2. 暗号化 → 3. 復号")
+# --- 受信者モード ---
+if role == "受信者":
+    st.header("1. 鍵生成（受信者）")
     st.caption("p, q, e はすべて異なる素数を選んでください。")
-    p, q, e = st.columns(3)
-    with p:
-        p_val = st.selectbox("素数 p", primes, key='p1')
-    with q:
-        q_val = st.selectbox("素数 q", primes, key='q1')
-    with e:
-        e_val = st.selectbox("公開鍵 e", primes, key='e1')
-    if st.button("鍵生成（1人）"):
-        st.session_state['generated_1'] = True
-        st.session_state['p1_val'] = p_val
-        st.session_state['q1_val'] = q_val
-        st.session_state['e1_val'] = e_val
-        if p_val == q_val or p_val == e_val or q_val == e_val:
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        p = st.selectbox("素数 p", primes)
+    with col2:
+        q = st.selectbox("素数 q", primes)
+    with col3:
+        e = st.selectbox("公開鍵 e", primes)
+    if st.button("鍵生成（受信者）"):
+        st.session_state['done_recv'] = True
+        if p == q or p == e or q == e:
             st.error("p, q, e はすべて異なる値である必要があります。")
         else:
-            phi = (p_val - 1) * (q_val - 1)
-            if gcd(e_val, phi) != 1:
+            phi = (p-1)*(q-1)
+            if gcd(e,phi) != 1:
                 st.error("e は φ(n) と互いに素である必要があります。")
             else:
-                st.session_state['n'] = p_val * q_val
-                st.session_state['d'] = mod_inverse(e_val, phi)
-                st.session_state['e'] = e_val
-                st.success("鍵生成完了。以下の値を控えてください。")
-    if st.session_state['generated_1']:
-        n_val = st.session_state['n']
-        d_val = st.session_state['d']
-        # 公開鍵表示
+                st.session_state['n'] = p*q
+                st.session_state['d'] = mod_inverse(e,phi)
+                st.session_state['e'] = e
+                st.success("鍵生成完了。以下を控えてください。")
+    if st.session_state['done_recv']:
         cols = st.columns([2,3])
         cols[0].write("公開鍵 n (n = p × q)")
-        cols[0].caption(f"p={st.session_state['p1_val']}, q={st.session_state['q1_val']}")
-        cols[1].code(str(n_val))
-        # 公開指数表示
+        cols[0].caption(f"p={p}, q={q}")
+        cols[1].code(str(st.session_state['n']))
         cols = st.columns([2,3])
         cols[0].write("公開鍵 e")
-        cols[1].code(str(st.session_state['e1_val']))
-        # 秘密鍵表示
+        cols[1].code(str(st.session_state['e']))
         cols = st.columns([2,3])
-        cols[0].write("秘密鍵 d (受信者のみが持つ鍵)")
-        cols[1].code(str(d_val))
-
-    st.subheader("2. 暗号化")
-    # 生徒がコピー＆貼り付け用: 初期値空欄で横並び
-    enc_cols = st.columns(3)
-    with enc_cols[0]:
-        n_enc = st.text_input("公開鍵 n を入力", "", key='n_enc1')
-    with enc_cols[1]:
-        e_enc = st.text_input("公開鍵 e を入力", "", key='e_enc1')
-    with enc_cols[2]:
-        plain1 = st.text_input("平文 (A-Z、最大5文字)", "", key='plain1')
-    if st.button("暗号化（1人）"):
-        if not n_enc or not e_enc or not plain1:
-            st.error("公開鍵・指数・平文を入力してください。")
+        cols[0].write("秘密鍵 d (受信者のみ)" )
+        cols[1].code(str(st.session_state['d']))
+    st.header("2. 復号（受信者）")
+    n_in = st.text_input("公開鍵 n", "")
+    d_in = st.text_input("秘密鍵 d", "")
+    c_in = st.text_area("暗号文 (Base64)")
+    if st.button("復号（受信者）"):
+        if not n_in or not d_in or not c_in:
+            st.error("全て入力してください。")
         else:
             try:
-                n_val = int(n_enc)
-                e_val = int(e_enc)
-            except ValueError:
-                st.error("公開鍵と指数は数字で入力してください。")
-                st.stop()
-            if not plain1.isupper() or len(plain1) == 0:
-                st.error("平文は大文字アルファベット5文字以内で入力してください。")
-            else:
-                byte_size = (n_val.bit_length() + 7) // 8
-                cipher_bytes = b''
-                for c in plain1:
-                    m = ord(c) - 65
-                    c_i = pow(m, e_val, n_val)
-                    cipher_bytes += c_i.to_bytes(byte_size, 'big')
-                b64 = base64.b64encode(cipher_bytes).decode('ascii')
+                n=int(n_in); d=int(d_in)
+                cb=base64.b64decode(c_in)
+                size=(n.bit_length()+7)//8
+                msg=''.join(chr(pow(int.from_bytes(cb[i:i+size],'big'),d,n)+65)
+                            for i in range(0,len(cb),size))
+                st.success(f"復号結果: {msg}")
+            except:
+                st.error("復号に失敗しました。")
+
+# --- 送信者モード ---
+elif role == "送信者":
+    st.header("1. 暗号化（送信者）")
+    st.caption("受信者から公開鍵 n,e をコピーして入力してください。")
+    cols=st.columns(3)
+    with cols[0]: n_in=st.text_input("公開鍵 n","")
+    with cols[1]: e_in=st.text_input("公開鍵 e","")
+    with cols[2]: plain=st.text_input("平文 (A-Z最大5)","",max_chars=5)
+    if st.button("暗号化（送信者）"):
+        st.session_state['done_send']=True
+        if not n_in or not e_in or not plain:
+            st.error("全て入力してください。")
+        else:
+            try:
+                n=int(n_in); e=int(e_in)
+                size=(n.bit_length()+7)//8
+                cb=b''.join(pow(ord(c)-65,e,n).to_bytes(size,'big') for c in plain)
+                b64=base64.b64encode(cb).decode('ascii')
                 st.subheader("暗号文 (Base64)")
                 st.code(b64)
-                st.session_state['cipher_str'] = b64
+                st.session_state['cipher_str']=b64
+            except:
+                st.error("暗号化失敗。鍵と平文を確認してください。")
 
-    st.subheader("3. 復号")
-    # 初期値空欄にしてコピペ可能
-    n_dec = st.text_input("公開鍵 n を入力", "", key='n_dec1')
-    d_dec = st.text_input("秘密鍵 d を入力", "", key='d_dec1')
-    cipher1 = st.text_area("暗号文 (Base64)", "", key='cipher1')
-    if st.button("復号（1人）"):
-        if not n_dec or not d_dec or not cipher1:
-            st.error("公開鍵・秘密鍵・暗号文を入力してください。")
+# --- 一人で行うモード ---
+elif role == "一人で行う":
+    st.header("1. 鍵生成 → 2. 暗号化 → 3. 復号")
+    st.caption("p, q, e はすべて異なる素数を選んでください。")
+    cols=st.columns(3)
+    with cols[0]: p_val=st.selectbox("素数 p",primes,key='p1')
+    with cols[1]: q_val=st.selectbox("素数 q",primes,key='q1')
+    with cols[2]: e_val=st.selectbox("公開鍵 e",primes,key='e1')
+    if st.button("鍵生成（1人）"):
+        st.session_state['done_solo']=True
+        if p_val==q_val or p_val==e_val or q_val==e_val:
+            st.error("p,q,e は異なる必要があります。")
+        else:
+            phi=(p_val-1)*(q_val-1)
+            if gcd(e_val,phi)!=1:
+                st.error("e は φ(n) と互いに素である必要があります。")
+            else:
+                st.session_state['n']=p_val*q_val
+                st.session_state['e']=e_val
+                st.session_state['d']=mod_inverse(e_val,phi)
+                st.success("鍵生成完了")
+    if st.session_state['done_solo']:
+        # 表示同様
+        cs=st.columns([2,3])
+        cs[0].write("公開鍵 n (n = p × q)")
+        cs[0].caption(f"p={p_val},q={q_val}")
+        cs[1].code(str(st.session_state['n']))
+        cs=st.columns([2,3])
+        cs[0].write("公開鍵 e")
+        cs[1].code(str(e_val))
+        cs=st.columns([2,3])
+        cs[0].write("秘密鍵 d (受信者のみ)")
+        cs[1].code(str(st.session_state['d']))
+    st.subheader("2. 暗号化")
+    enc_cols=st.columns(3)
+    with enc_cols[0]: n_enc=st.text_input("公開鍵 n を入力","",key='n_enc1')
+    with enc_cols[1]: e_enc=st.text_input("公開鍵 e を入力","",key='e_enc1')
+    with enc_cols[2]: plain1=st.text_input("平文 (A-Z最大5)","",key='plain1')
+    if st.button("暗号化（1人）"):
+        if not n_enc or not e_enc or not plain1:
+            st.error("全て入力してください。")
         else:
             try:
-                n_val = int(n_dec)
-                d_val = int(d_dec)
-            except ValueError:
-                st.error("公開鍵と秘密鍵は数字で入力してください。")
-                st.stop()
+                n=int(n_enc);e=int(e_enc)
+                size=(n.bit_length()+7)//8
+                cb=b''.join(pow(ord(c)-65,e,n).to_bytes(size,'big') for c in plain1)
+                b64=base64.b64encode(cb).decode('ascii')
+                st.code(b64)
+                st.session_state['cipher_str']=b64
+            except:
+                st.error("暗号化エラー")
+    st.subheader("3. 復号")
+    dec_cols=st.columns(3)
+    with dec_cols[0]: n_dec=st.text_input("公開鍵 n を入力","",key='n_dec1')
+    with dec_cols[1]: d_dec=st.text_input("秘密鍵 d を入力","",key='d_dec1')
+    with dec_cols[2]: cipher1=st.text_area("暗号文(Base64)","",key='cipher1')
+    if st.button("復号（1人）"):
+        if not n_dec or not d_dec or not cipher1:
+            st.error("全て入力してください。")
+        else:
             try:
-                cipher_bytes = base64.b64decode(cipher1)
-                byte_size = (n_val.bit_length() + 7) // 8
-                chars = []
-                for i in range(0, len(cipher_bytes), byte_size):
-                    block = cipher_bytes[i:i+byte_size]
-                    c_i = int.from_bytes(block, 'big')
-                    m = pow(c_i, d_val, n_val)
-                    chars.append(chr(m + 65))
-                st.success(f"復号結果: {''.join(chars)}")
-            except Exception:
-                st.error("復号に失敗しました。鍵と暗号文を確認してください。")
+                n=int(n_dec);d=int(d_dec)
+                cb=base64.b64decode(cipher1)
+                size=(n.bit_length()+7)//8
+                msg=''.join(chr(pow(int.from_bytes(cb[i:i+size],'big'),d,n)+65) for i in range(0,len(cb),size))
+                st.success(f"復号結果: {msg}")
+            except:
+                st.error("復号エラー")
