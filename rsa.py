@@ -37,7 +37,7 @@ for key in ('n','e','d','cipher_str','generated','generated_1','p1_val','q1_val'
 # ---- アプリタイトル／役割選択 ----
 st.title("CipherLink")
 st.subheader("役割を選択してください")
-role = st.radio("", ["受信者","送信者","一人で行う"], horizontal=True) ["受信者","送信者","一人で行う"])
+role = st.radio("", ["受信者","送信者","一人で行う"], horizontal=True))
 
 st.markdown(
     """
