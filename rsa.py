@@ -78,21 +78,30 @@ if role == "受信者":
     d_input = st.text_input("秘密鍵 d", value="")
     cipher_input = st.text_area("暗号文 (Base64)")
     if st.button("復号（受信者）"):
-        try:
-            n = int(n_input)
-            d = int(d_input)
-            cipher_bytes = base64.urlsafe_b64decode(cipher_input + '==')
-            size = (n.bit_length() + 7) // 8
-            msg = ''
-            for i in range(0, len(cipher_bytes), size):
-                block = cipher_bytes[i:i+size]
-                m = pow(int.from_bytes(block,'big'), d, n)
-                msg += chr(m + 65)
-            st.write(f"復号結果: {msg}")
-        except:
-            st.error("公開鍵・秘密鍵・暗号文を確認してください。")
-
-# --- 送信者モード ---
+        n_val = n_input.strip()
+        d_val = d_input.strip()
+        if not n_val or not d_val or not cipher_input.strip():
+            st.error("公開鍵・秘密鍵・暗号文をすべて入力してください。")
+        else:
+            try:
+                n = int(n_val)
+                d = int(d_val)
+                # Base64のパディングを自動補完
+                b64 = cipher_input.strip()
+                pad_len = (-len(b64)) % 4
+                b64 += '=' * pad_len
+                cipher_bytes = base64.urlsafe_b64decode(b64)
+                size = (n.bit_length() + 7) // 8
+                msg = ''
+                for i in range(0, len(cipher_bytes), size):
+                    block = cipher_bytes[i:i+size]
+                    m = pow(int.from_bytes(block, 'big'), d, n)
+                    msg += chr(m + 65)
+                st.success(f"復号結果: {msg}")
+            except ValueError:
+                st.error("公開鍵・秘密鍵は数字で入力してください。")
+            except Exception:
+                st.error("復号に失敗しました。公開鍵、秘密鍵、暗号文を確認してください。")
 elif role == "送信者":
     st.header("1. 暗号化（送信者）")
     n_input = st.text_input("受信者から受け取った公開鍵 n", value="")
