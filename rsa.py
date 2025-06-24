@@ -83,10 +83,16 @@ if role == "受信者":
         if not n_val or not d_val or not cipher_input.strip():
             st.error("公開鍵・秘密鍵・暗号文をすべて入力してください。")
         else:
+            # 鍵が数字か確認
             try:
                 n = int(n_val)
                 d = int(d_val)
-                # Base64のパディングを自動補完
+            except ValueError:
+                st.error("公開鍵と秘密鍵は数字で入力してください。")
+                # 処理を中断
+                st.stop()
+            # Base64デコードと復号
+            try:
                 b64 = cipher_input.strip()
                 pad_len = (-len(b64)) % 4
                 b64 += '=' * pad_len
@@ -98,10 +104,8 @@ if role == "受信者":
                     m = pow(int.from_bytes(block, 'big'), d, n)
                     msg += chr(m + 65)
                 st.success(f"復号結果: {msg}")
-            except ValueError:
-                st.error("公開鍵・秘密鍵は数字で入力してください。")
             except Exception:
-                st.error("復号に失敗しました。公開鍵、秘密鍵、暗号文を確認してください。")
+                st.error("復号に失敗しました。公開鍵・秘密鍵・暗号文を確認してください。")
 elif role == "送信者":
     st.header("1. 暗号化（送信者）")
     n_input = st.text_input("受信者から受け取った公開鍵 n", value="")
