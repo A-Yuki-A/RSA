@@ -74,9 +74,9 @@ if role == "受信者":
                 # 鍵の特徴をラベルに追加
                 # 公開鍵 n
                 col_n_label, col_n_code = st.columns([2,3])
-                col_n_label.write("公開鍵 n (モジュラス)")
+                col_n_label.write("公開鍵 n (n = p × q)")
                 # n = p × q を表示
-                col_n_label.caption(f"n = {p} × {q}")
+                
                 col_n_code.code(str(n))
                 # 公開指数 e
                 col_e_label, col_e_code = st.columns([2,3])
@@ -84,9 +84,9 @@ if role == "受信者":
                 col_e_code.code(str(e))
                 # 秘密鍵 d
                 col_d_label, col_d_code = st.columns([2,3])
-                col_d_label.write("秘密鍵 d (復号鍵、指数部)")
+                col_d_label.write("秘密鍵 d (受信者のみが持つ鍵)")
                 # 受信者のみが持つ鍵
-                col_d_label.caption("受信者のみが持つ鍵")
+                
                 col_d_code.code(str(d))
     
     st.header("2. 復号（受信者）")
