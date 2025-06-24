@@ -30,22 +30,19 @@ all_primes = generate_primes(6000)
 primes = [p for p in all_primes if 5000 <= p <= 6000]
 
 # ---- セッションステート初期化 ----
-if 'n' not in st.session_state:
-    st.session_state['n'] = 0
-if 'e' not in st.session_state:
-    st.session_state['e'] = 0
-if 'd' not in st.session_state:
-    st.session_state['d'] = 0
-if 'cipher_str' not in st.session_state:
-    st.session_state['cipher_str'] = ''
+for key in ('n', 'e', 'd', 'cipher_str'):
+    if key not in st.session_state:
+        st.session_state[key] = 0 if key != 'cipher_str' else ''
 
 st.title("RSA 暗号シミュレータ（一文字ずつ暗号化）")
 
 # ---- 鍵の説明 ----
-st.markdown("""
+st.markdown(
+    """
 **公開鍵 (n, e)**…平文を暗号化する鍵（みんなに公開）  
 **秘密鍵 d**…暗号文を復号する鍵（自分だけ）
-""")
+    """
+)
 
 # 1. 鍵作成
 st.header("1. 鍵の作成（素数 p, q, e は 5000～6000）")
@@ -61,18 +58,19 @@ if st.button("鍵生成"):
     if gcd(e, phi) != 1:
         st.error("公開指数 e が φ(n) と互いに素ではありません。別の e を選んでください。")
     else:
-        d = mod_inverse(e, phi)
         st.session_state['n'] = p * q
         st.session_state['e'] = e
-        st.session_state['d'] = d
+        st.session_state['d'] = mod_inverse(e, phi)
         st.success(f"公開鍵 (n, e) = ({st.session_state['n']}, {st.session_state['e']})")
         st.success(f"秘密鍵 d = {st.session_state['d']}")
 
 # 2. 暗号化（一文字ずつ、Base64文字列出力）
 st.header("2. 暗号化（動的に表示される鍵を使用）")
-st.write("現在の公開鍵 n:", st.session_state['n'])
-st.write("現在の公開鍵 e:", st.session_state['e'])
-plain = st.text_input("平文（大文字5文字以内）", max_chars=5, key="plain")
+st.write("公開鍵 n:", st.session_state['n'], " / e:", st.session_state['e'])
+plain = st.text_input("平文（大文字5文字以内）", max_chars=5)
+
+# 暗号文表示用のプレースホルダー
+enc_placeholder = st.empty()
 if st.button("暗号化", key="enc"):
     if st.session_state['n'] == 0:
         st.error("先に鍵生成を行ってください。")
@@ -85,15 +83,14 @@ if st.button("暗号化", key="enc"):
             m_i = ord(c) - 65
             c_i = pow(m_i, st.session_state['e'], st.session_state['n'])
             cipher_bytes += c_i.to_bytes(byte_size, 'big')
-        b64 = base64.b64encode(cipher_bytes).decode('ascii')
+        b64 = base64.b64encode(cipheriber_bytes).decode('ascii')
         st.session_state['cipher_str'] = b64
-        st.write("暗号文 (Base64文字列):")
-        st.code(b64)
+        # 暗号文をコードブロックで表示し、コピー可能
+        enc_placeholder.code(b64, language='text')
 
 # 3. 復号（Base64文字列入力）
 st.header("3. 復号（動的に表示される鍵を使用）")
-st.write("現在の公開鍵 n:", st.session_state['n'])
-st.write("現在の秘密鍵 d:", st.session_state['d'])
+st.write("公開鍵 n:", st.session_state['n'], " / d:", st.session_state['d'])
 
 cipher_input = st.text_area("暗号文 (Base64文字列)", value=st.session_state['cipher_str'])
 if st.button("復号", key="dec"):
@@ -111,4 +108,4 @@ if st.button("復号", key="dec"):
                 chars.append(chr(m_i + 65))
             st.write("復号結果:", ''.join(chars))
         except Exception:
-            st.error("暗号文の形式が正しくありません。有効なBase64文字列を入力してください。")
+            st.error("有効なBase64文字列を入力してください。")
