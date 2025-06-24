@@ -34,73 +34,83 @@ for key in ('n', 'e', 'd', 'cipher_str'):
     if key not in st.session_state:
         st.session_state[key] = 0 if key != 'cipher_str' else ''
 
-# ---- 役割選択 ----
-st.title("RSA Secure Exchange")
-role = st.radio("Select Role:", ["Sender", "Receiver"])
+# ---- タイトル ----
+st.title("CipherLink")
 
-# 説明
+# ---- 役割選択 ----
+st.subheader("役割を選択してください")
+role = st.radio("", ["送信者", "受信者"])
+
+# ---- 説明 ----
 st.markdown(
     """
-Use this tool to simulate RSA encryption and decryption between two students.
-- Sender: Generate keys and encrypt messages.
-- Receiver: Decrypt messages with the shared public key and own private key.
-"""
+このツールは二人でRSA暗号を学習するためのものです。
+- **送信者**: 鍵の生成とメッセージの暗号化を行います。
+- **受信者**: 受け取った暗号文を復号します。
+    """
 )
 
-# 共通: キー作成パネル
-if role == "Sender":
-    st.header("1. Key Generation (Sender)")
+# 送信者の画面
+if role == "送信者":
+    st.header("1. 鍵の生成（送信者）")
     col1, col2, col3 = st.columns(3)
     with col1:
-        p = st.selectbox("Prime p", primes, index=0)
+        p = st.selectbox("素数 p", primes, index=0)
     with col2:
-        q = st.selectbox("Prime q", primes, index=1)
+        q = st.selectbox("素数 q", primes, index=1)
     with col3:
-        e = st.selectbox("Public exponent e", primes, index=4)
-    if st.button("Generate Keys"):
+        e = st.selectbox("公開指数 e", primes, index=2)
+    if st.button("鍵生成"):
         phi = (p - 1) * (q - 1)
         if gcd(e, phi) != 1:
-            st.error("e must be coprime with φ(n). Choose another e.")
+            st.error("公開指数 e は φ(n) と互いに素である必要があります。別の値を選んでください。")
         else:
             st.session_state['n'] = p * q
             st.session_state['e'] = e
             st.session_state['d'] = mod_inverse(e, phi)
-            st.success(f"Public key (n, e): ({st.session_state['n']}, {st.session_state['e']})")
-            st.success(f"Private key d: {st.session_state['d']}")
+            st.success(f"公開鍵 (n, e): ({st.session_state['n']}, {st.session_state['e']})")
+            st.success(f"秘密鍵 d: {st.session_state['d']}")
 
-    # 暗号化パネル
-    st.header("2. Encryption (Sender)")
+    st.header("2. 暗号化（送信者）")
     if st.session_state['n'] == 0:
-        st.info("Generate keys first.")
+        st.info("まず鍵生成を行ってください。")
     else:
-        plain = st.text_input("Plaintext (A-Z, max 5 chars)", max_chars=5)
-        if st.button("Encrypt"):
-            byte_size = (st.session_state['n'].bit_length() + 7) // 8
-            cipher_bytes = b''
-            for c in plain:
-                m_i = ord(c) - 65
-                c_i = pow(m_i, st.session_state['e'], st.session_state['n'])
-                cipher_bytes += c_i.to_bytes(byte_size, 'big')
-            b64 = base64.b64encode(cipher_bytes).decode('ascii')
-            st.session_state['cipher_str'] = b64
-            st.code(b64, language='text')
-elif role == "Receiver":
-    # 復号パネル
-    st.header("3. Decryption (Receiver)")
-    st.text_input("Public key n", value=st.session_state.get('n', 0), disabled=True)
-    st.text_input("Public exponent e", value=st.session_state.get('e', 0), disabled=True)
-    d_input = st.number_input("Private key d", value=st.session_state.get('d', 0), step=1)
-    cipher_input = st.text_area("Ciphertext (Base64)")
-    if st.button("Decrypt"):
-        try:
-            cipher_bytes = base64.b64decode(cipher_input)
-            byte_size = (st.session_state['n'].bit_length() + 7) // 8
-            chars = []
-            for i in range(0, len(cipher_bytes), byte_size):
-                block = cipher_bytes[i:i+byte_size]
-                c_i = int.from_bytes(block, 'big')
-                m_i = pow(c_i, d_input, st.session_state['n'])
-                chars.append(chr(m_i + 65))
-            st.write("Decrypted message:", ''.join(chars))
-        except Exception:
-            st.error("Invalid Base64 or decryption error.")
+        plain = st.text_input("平文（大文字A-Z、最大5文字）", max_chars=5)
+        if st.button("暗号化"):
+            if not plain.isupper() or len(plain) == 0:
+                st.error("大文字5文字以内で入力してください。")
+            else:
+                byte_size = (st.session_state['n'].bit_length() + 7) // 8
+                cipher_bytes = b''
+                for c in plain:
+                    m_i = ord(c) - 65
+                    c_i = pow(m_i, st.session_state['e'], st.session_state['n'])
+                    cipher_bytes += c_i.to_bytes(byte_size, 'big')
+                b64 = base64.b64encode(cipher_bytes).decode('ascii')
+                st.session_state['cipher_str'] = b64
+                st.subheader("暗号文 (Base64)")
+                st.code(b64, language='')
+
+# 受信者の画面
+elif role == "受信者":
+    st.header("3. 復号（受信者）")
+    st.text_input("公開鍵 n", value=st.session_state.get('n', 0), disabled=True)
+    st.text_input("公開指数 e", value=st.session_state.get('e', 0), disabled=True)
+    d_input = st.number_input("秘密鍵 d", value=st.session_state.get('d', 0), step=1)
+    cipher_input = st.text_area("暗号文 (Base64)")
+    if st.button("復号"):
+        if st.session_state['n'] == 0:
+            st.error("まず送信者に鍵生成と暗号化を行ってもらってください。")
+        else:
+            try:
+                cipher_bytes = base64.b64decode(cipher_input)
+                byte_size = (st.session_state['n'].bit_length() + 7) // 8
+                chars = []
+                for i in range(0, len(cipher_bytes), byte_size):
+                    block = cipher_bytes[i:i+byte_size]
+                    c_i = int.from_bytes(block, 'big')
+                    m_i = pow(c_i, d_input, st.session_state['n'])
+                    chars.append(chr(m_i + 65))
+                st.write("復号結果：", ''.join(chars))
+            except Exception:
+                st.error("有効なBase64文字列を入力してください。")
