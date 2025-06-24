@@ -34,6 +34,7 @@ for key in ('n','e','d','cipher_str'):
     if key not in st.session_state:
         st.session_state[key] = 0 if key!='cipher_str' else ''
 
+# ---- アプリタイトル／役割選択 ----
 st.title("CipherLink")
 st.subheader("役割を選択してください")
 role = st.radio("", ["受信者","送信者","一人で行う"])
@@ -47,6 +48,7 @@ st.markdown(
 """
 )
 
+# --- 受信者モード ---
 if role == "受信者":
     st.header("1. 鍵生成（受信者）")
     st.caption("p, q, e はすべて異なる素数を選んでください。")
@@ -68,15 +70,15 @@ if role == "受信者":
                 n = p * q
                 d = mod_inverse(e, phi)
                 st.session_state.update({'n': n, 'e': e, 'd': d})
-                st.success("鍵生成完了。以下を控えてください。")
-                # コピー可能な数値表示
-                st.markdown("公開鍵 n:")
+                st.success("鍵生成完了。以下の値を控えてください。")
+                # 鍵の特徴をラベルに追加
+                st.markdown("**公開鍵 n (モジュラス)**")
                 st.code(str(n))
-                st.markdown("公開鍵 e:")
+                st.markdown("**公開指数 e (公開鍵の指数部)**")
                 st.code(str(e))
-                st.markdown("秘密鍵 d:")
+                st.markdown("**秘密鍵 d (復号鍵、指数部)**")
                 st.code(str(d))
-
+    
     st.header("2. 復号（受信者）")
     n_input = st.text_input("公開鍵 n を入力", "")
     d_input = st.text_input("秘密鍵 d を入力", "")
@@ -106,6 +108,7 @@ if role == "受信者":
             except Exception:
                 st.error("復号に失敗しました。鍵と暗号文を確認してください。")
 
+# --- 送信者モード ---
 elif role == "送信者":
     st.header("1. 暗号化（送信者）")
     n_input = st.text_input("公開鍵 n を入力", "")
@@ -131,6 +134,7 @@ elif role == "送信者":
             st.code(b64)
             st.session_state['cipher_str'] = b64
 
+# --- 一人で行うモード ---
 elif role == "一人で行う":
     st.header("1. 鍵生成 → 2. 暗号化 → 3. 復号")
     st.caption("p, q, e はすべて異なる素数を選んでください。")
@@ -152,12 +156,12 @@ elif role == "一人で行う":
                 n = p_val * q_val
                 d = mod_inverse(e_val, phi)
                 st.session_state.update({'n': n, 'e': e_val, 'd': d})
-                st.success("鍵生成完了。以下を控えてください。")
-                st.markdown("公開鍵 n:")
+                st.success("鍵生成完了。以下の値を控えてください。")
+                st.markdown("**公開鍵 n (モジュラス)**")
                 st.code(str(n))
-                st.markdown("公開鍵 e:")
+                st.markdown("**公開指数 e (公開鍵の指数部)**")
                 st.code(str(e_val))
-                st.markdown("秘密鍵 d:")
+                st.markdown("**秘密鍵 d (復号鍵、指数部)**")
                 st.code(str(d))
 
     st.subheader("2. 暗号化")
