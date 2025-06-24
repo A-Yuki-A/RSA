@@ -48,7 +48,7 @@ st.markdown(
 - **受信者**: 鍵生成→公開鍵を送信者に渡す→暗号文を復号します。
 - **送信者**: 公開鍵を受け取り→メッセージを暗号化します。
 - **一人で行う**: すべてのステップをひとりで体験できます。
-    """
+"""
 )
 
 # --- 受信者モード ---
@@ -74,9 +74,9 @@ if role == "受信者":
                 d = mod_inverse(e, phi)
                 st.session_state.update({'n': n, 'e': e, 'd': d})
                 st.success("鍵生成完了。以下を控えてください。")
-                st.code(f"公開鍵 n: {n}", language='')
-                st.code(f"公開鍵 e: {e}", language='')
-                st.code(f"秘密鍵 d: {d}", language='')
+                st.write("公開鍵 n:", st.code(str(n)))
+                st.write("公開鍵 e:", st.code(str(e)))
+                st.write("秘密鍵 d:", st.code(str(d)))
 
     st.header("2. 復号（受信者）")
     n_input = st.text_input("公開鍵 n を入力", "")
@@ -155,9 +155,9 @@ elif role == "一人で行う":
                 d = mod_inverse(e_val, phi)
                 st.session_state.update({'n': n, 'e': e_val, 'd': d})
                 st.success("鍵生成完了。以下を控えてください。")
-                st.code(f"公開鍵 n: {n}", language='')
-                st.code(f"公開鍵 e: {e_val}", language='')
-                st.code(f"秘密鍵 d: {d}", language='')
+                st.write("公開鍵 n:", st.code(str(n)))
+                st.write("公開鍵 e:", st.code(str(e_val)))
+                st.write("秘密鍵 d:", st.code(str(d)))
 
     # 暗号化ステップ
     st.subheader("2. 暗号化（一人モード）")
@@ -179,7 +179,7 @@ elif role == "一人で行う":
                 ct += pow(ord(c) - 65, e, n).to_bytes(size, 'big')
             b64 = base64.urlsafe_b64encode(ct).decode().rstrip('=')
             st.subheader("暗号文 (Base64)")
-            st.code(b64)
+            st. code(b64)
             st.session_state['cipher_str'] = b64
 
     # 復号ステップ（フォーム）
