@@ -9,21 +9,39 @@ def is_prime(n):
             return False
     return True
 
+def gcd(a, b):
+    while b:
+        a, b = b, a % b
+    return a
+
+def mod_inverse(a, m):
+    # 拡張ユークリッド互除法で ax + my = g を求める
+    def egcd(x, y):
+        if y == 0:
+            return (1, 0, x)
+        u, v, g = egcd(y, x % y)
+        return (v, u - (x // y) * v, g)
+    x, _, g = egcd(a, m)
+    if g != 1:
+        return None
+    return x % m
+
 def text_to_numbers(text):
     return ''.join(f"{ord(c)-65:02d}" for c in text)
 
 def numbers_to_text(num_str):
+    # 先頭ゼロを補う
+    if len(num_str) % 2 != 0:
+        num_str = '0' + num_str
     return ''.join(chr(int(num_str[i:i+2]) + 65)
                    for i in range(0, len(num_str), 2))
-
-def mod_inverse(e, phi):
-    return pow(e, -1, phi)
 
 # ---- セッションステート初期化 ----
 if 'n' not in st.session_state:
     st.session_state.n = 0
     st.session_state.e = 0
     st.session_state.d = 0
+    st.session_state.plain_len = 0
 
 st.title("RSA 暗号シミュレータ（一人二役）")
 
@@ -49,20 +67,23 @@ with cole:
     e = st.number_input("公開鍵指数 e", min_value=3, step=2, value=5)
 
 if st.button("鍵を作成"):
-    if not (is_prime(p) and is_prime(q)):
+    if not is_prime(p) or not is_prime(q):
         st.error("p, q は素数を入力してください。")
     else:
         n = p * q
         phi = (p - 1) * (q - 1)
-        if phi % e == 0:
+        if gcd(e, phi) != 1:
             st.error("e と φ(n) が互いに素ではありません。別の e を選んでください。")
         else:
             d = mod_inverse(e, phi)
-            st.session_state.n = n
-            st.session_state.e = e
-            st.session_state.d = d
-            st.success(f"公開鍵 (n, e) = ({n}, {e})")
-            st.success(f"秘密鍵 d = {d}")
+            if d is None:
+                st.error("秘密鍵の計算に失敗しました。")
+            else:
+                st.session_state.n = n
+                st.session_state.e = e
+                st.session_state.d = d
+                st.success(f"公開鍵 (n, e) = ({n}, {e})")
+                st.success(f"秘密鍵 d = {d}")
 
 # ---- 2. 暗号化パネル ----
 st.header("2. 暗号化")
@@ -80,6 +101,7 @@ if st.button("暗号化", key="enc"):
     if not plain.isupper() or len(plain) == 0:
         st.error("大文字の英字を５文字以内で入力してください。")
     else:
+        st.session_state.plain_len = len(plain)
         m = int(text_to_numbers(plain))
         c = pow(m, e_enc, n_enc)
         st.write("平文 → 数値変換：", m)
@@ -98,8 +120,8 @@ cipher = st.text_input("暗号文（数値）", key="cipher")
 if st.button("復号", key="dec"):
     try:
         m2 = pow(int(cipher), d_dec, n_dec)
-        # 復号後の数値を 2桁ずつにそろす
-        num_str = str(m2).zfill(len(cipher))
+        # 平文の文字数×2 桁になるようゼロ埋め
+        num_str = str(m2).zfill(st.session_state.plain_len * 2)
         pt = numbers_to_text(num_str)
         st.write("復元した数値：", m2)
         st.write("復号結果（平文）：", pt)
