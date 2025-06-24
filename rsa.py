@@ -72,12 +72,22 @@ if role == "受信者":
                 st.session_state.update({'n': n, 'e': e, 'd': d})
                 st.success("鍵生成完了。以下の値を控えてください。")
                 # 鍵の特徴をラベルに追加
-                st.markdown("**公開鍵 n (モジュラス)**")
-                st.code(str(n))
-                st.markdown("**公開指数 e (公開鍵の指数部)**")
-                st.code(str(e))
-                st.markdown("**秘密鍵 d (復号鍵、指数部)**")
-                st.code(str(d))
+                # 公開鍵 n
+                col_n_label, col_n_code = st.columns([2,3])
+                col_n_label.write("公開鍵 n (モジュラス)")
+                # n = p × q を表示
+                col_n_label.caption(f"n = {p} × {q}")
+                col_n_code.code(str(n))
+                # 公開指数 e
+                col_e_label, col_e_code = st.columns([2,3])
+                col_e_label.write("公開指数 e (公開鍵の指数部)")
+                col_e_code.code(str(e))
+                # 秘密鍵 d
+                col_d_label, col_d_code = st.columns([2,3])
+                col_d_label.write("秘密鍵 d (復号鍵、指数部)")
+                # 受信者のみが持つ鍵
+                col_d_label.caption("受信者のみが持つ鍵")
+                col_d_code.code(str(d))
     
     st.header("2. 復号（受信者）")
     n_input = st.text_input("公開鍵 n を入力", "")
