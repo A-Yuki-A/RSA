@@ -62,20 +62,19 @@ if st.button("鍵生成"):
         st.session_state['e'] = e
         st.session_state['d'] = mod_inverse(e, phi)
         st.success(f"公開鍵 (n, e) = ({st.session_state['n']}, {st.session_state['e']})")
-        st.success(f"秘密鍵 d = {st.session_state['d']}")
+        st.success(f"秘密鍵 d = {st.session_state['d']}" )
 
 # 2. 暗号化（一文字ずつ、Base64文字列出力）
-st.header("2. 暗号化（動的に表示される鍵を使用）")
+st.header("2. 暗号化（現在の鍵を使用）")
 st.write("公開鍵 n:", st.session_state['n'], " / e:", st.session_state['e'])
 plain = st.text_input("平文（大文字5文字以内）", max_chars=5)
-
-# 暗号文表示用のプレースホルダー
+# 暗号文表示用プレースホルダー
 enc_placeholder = st.empty()
 if st.button("暗号化", key="enc"):
     if st.session_state['n'] == 0:
         st.error("先に鍵生成を行ってください。")
-    elif not plain.isupper() or len(plain) == 0:
-        st.error("大文字アルファベットで入力してください。")
+    elif not plain.isupper() or not plain:
+        st.error("大文字アルファベットを入力してください。")
     else:
         byte_size = (st.session_state['n'].bit_length() + 7) // 8
         cipher_bytes = b''
@@ -83,17 +82,16 @@ if st.button("暗号化", key="enc"):
             m_i = ord(c) - 65
             c_i = pow(m_i, st.session_state['e'], st.session_state['n'])
             cipher_bytes += c_i.to_bytes(byte_size, 'big')
-        # 修正: 正しい変数名 cipher_bytes を使用して Base64 エンコード
         b64 = base64.b64encode(cipher_bytes).decode('ascii')
         st.session_state['cipher_str'] = b64
-        # 暗号文をコードブロックで表示し、コピー可能
+        # 暗号文を即表示、コピー可能
         enc_placeholder.code(b64, language='text')
 
-# 3. 復号（Base64文字列入力）
-st.header("3. 復号（動的に表示される鍵を使用）")
+# 3. 復号（動的に表示される鍵を使用）
+st.header("3. 復号（現在の鍵を使用）")
 st.write("公開鍵 n:", st.session_state['n'], " / d:", st.session_state['d'])
-
-cipher_input = st.text_area("暗号文 (Base64文字列)", value=st.session_state['cipher_str'])
+# 生徒が貼り付けできるように空欄設定
+cipher_input = st.text_area("暗号文 (Base64文字列)", value="")
 if st.button("復号", key="dec"):
     if st.session_state['n'] == 0:
         st.error("先に鍵生成と暗号化を行ってください。")
