@@ -71,22 +71,15 @@ if role == "受信者":
                 d = mod_inverse(e, phi)
                 st.session_state.update({'n': n, 'e': e, 'd': d})
                 st.success("鍵生成完了。以下の値を控えてください。")
-                # 鍵の特徴をラベルに追加
-                # 公開鍵 n
+                # 鍵の特徴を横並びで表示
                 col_n_label, col_n_code = st.columns([2,3])
                 col_n_label.write("公開鍵 n (n = p × q)")
-                # n = p × q を表示
-                
                 col_n_code.code(str(n))
-                # 公開指数 e
                 col_e_label, col_e_code = st.columns([2,3])
                 col_e_label.write("公開指数 e (公開鍵の指数部)")
                 col_e_code.code(str(e))
-                # 秘密鍵 d
                 col_d_label, col_d_code = st.columns([2,3])
                 col_d_label.write("秘密鍵 d (受信者のみが持つ鍵)")
-                # 受信者のみが持つ鍵
-                
                 col_d_code.code(str(d))
     
     st.header("2. 復号（受信者）")
@@ -167,12 +160,15 @@ elif role == "一人で行う":
                 d = mod_inverse(e_val, phi)
                 st.session_state.update({'n': n, 'e': e_val, 'd': d})
                 st.success("鍵生成完了。以下の値を控えてください。")
-                st.markdown("**公開鍵 n (モジュラス)**")
-                st.code(str(n))
-                st.markdown("**公開指数 e (公開鍵の指数部)**")
-                st.code(str(e_val))
-                st.markdown("**秘密鍵 d (復号鍵、指数部)**")
-                st.code(str(d))
+                col_n_label, col_n_code = st.columns([2,3])
+                col_n_label.write("公開鍵 n (n = p × q)")
+                col_n_code.code(str(n))
+                col_e_label, col_e_code = st.columns([2,3])
+                col_e_label.write("公開指数 e (公開鍵の指数部)")
+                col_e_code.code(str(e_val))
+                col_d_label, col_d_code = st.columns([2,3])
+                col_d_label.write("秘密鍵 d (受信者のみが持つ鍵)")
+                col_d_code.code(str(d))
 
     st.subheader("2. 暗号化")
     n_enc = st.text_input("公開鍵 n を入力", key='n_enc1')
