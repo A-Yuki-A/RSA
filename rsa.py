@@ -27,7 +27,6 @@ def mod_inverse(a, m):
 # ---- 素数リスト（5000～6000） ----
 all_primes = generate_primes(6000)
 primes = [p for p in all_primes if 5000 <= p <= 6000]
-primes_small = [p for p in generate_primes(1000)]
 
 # ---- セッションステート初期化 ----
 if 'n' not in st.session_state:
@@ -42,14 +41,14 @@ st.markdown("""
 """)
 
 # 1. 鍵作成
-st.header("1. 鍵の作成（素数 p, q は 5000～6000）")
+st.header("1. 鍵の作成（素数 p, q, e は 5000～6000）")
 col1, col2, col3 = st.columns(3)
 with col1:
     p = st.selectbox("素数 p", primes, index=0)
 with col2:
     q = st.selectbox("素数 q", primes, index=1)
 with col3:
-    e = st.selectbox("公開鍵指数 e", primes_small, index=4)
+    e = st.selectbox("公開鍵指数 e", primes, index=4)
 
 if st.button("鍵生成"):
     phi = (p - 1) * (q - 1)
