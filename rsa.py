@@ -49,7 +49,7 @@ st.markdown(
 )
 
 # --- 一人で行うモード ---
-elif role == "一人で行う":
+if role == "一人で行う":
     st.header("1. 鍵生成 → 2. 暗号化 → 3. 復号")
     st.caption("p, q, e はすべて異なる素数を選んでください。")
     p, q, e = st.columns(3)
@@ -78,13 +78,19 @@ elif role == "一人で行う":
     if st.session_state['generated_1']:
         n_val = st.session_state['n']
         d_val = st.session_state['d']
-        st.columns([2,3])[0].write("公開鍵 n (n = p × q)")
-        st.columns([2,3])[0].caption(f"p={st.session_state['p1_val']}, q={st.session_state['q1_val']}")
-        st.columns([2,3])[1].code(str(n_val))
-        st.columns([2,3])[0].write("公開鍵 e")
-        st.columns([2,3])[1].code(str(st.session_state['e1_val']))
-        st.columns([2,3])[0].write("秘密鍵 d (受信者のみが持つ鍵)")
-        st.columns([2,3])[1].code(str(d_val))
+        # 公開鍵表示
+        cols = st.columns([2,3])
+        cols[0].write("公開鍵 n (n = p × q)")
+        cols[0].caption(f"p={st.session_state['p1_val']}, q={st.session_state['q1_val']}")
+        cols[1].code(str(n_val))
+        # 公開指数表示
+        cols = st.columns([2,3])
+        cols[0].write("公開鍵 e")
+        cols[1].code(str(st.session_state['e1_val']))
+        # 秘密鍵表示
+        cols = st.columns([2,3])
+        cols[0].write("秘密鍵 d (受信者のみが持つ鍵)")
+        cols[1].code(str(d_val))
 
     st.subheader("2. 暗号化")
     # 生徒がコピー＆貼り付け用: 初期値空欄
