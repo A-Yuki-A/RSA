@@ -83,7 +83,8 @@ if st.button("暗号化", key="enc"):
             m_i = ord(c) - 65
             c_i = pow(m_i, st.session_state['e'], st.session_state['n'])
             cipher_bytes += c_i.to_bytes(byte_size, 'big')
-        b64 = base64.b64encode(cipheriber_bytes).decode('ascii')
+        # 修正: 正しい変数名 cipher_bytes を使用して Base64 エンコード
+        b64 = base64.b64encode(cipher_bytes).decode('ascii')
         st.session_state['cipher_str'] = b64
         # 暗号文をコードブロックで表示し、コピー可能
         enc_placeholder.code(b64, language='text')
