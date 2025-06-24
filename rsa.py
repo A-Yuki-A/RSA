@@ -41,9 +41,6 @@ st.title("CipherLink")
 st.subheader("役割を選択してください")
 role = st.radio("", ["受信者","送信者","一人で行う"])
 
-# ---- 注意 ----
-st.warning("p, q, e はすべて異なる素数を選んでください。")
-
 # ---- 説明 ----
 st.markdown(
     """
@@ -57,6 +54,7 @@ st.markdown(
 # --- 受信者モード ---
 if role == "受信者":
     st.header("1. 鍵生成（受信者）")
+    st.caption("p, q, e はすべて異なる素数を選んでください。")
     col1, col2, col3 = st.columns(3)
     with col1:
         p = st.selectbox("素数 p", primes)
@@ -76,9 +74,11 @@ if role == "受信者":
                 d = mod_inverse(e, phi)
                 st.session_state.update({'n': n, 'e': e, 'd': d})
                 st.success("鍵生成完了。以下を控えてください。")
-                st.write(f"n = {n}")
-                st.write(f"e = {e}")
-                st.write(f"d = {d}")
+                # コピー可能なコードブロックで表示
+                st.code(f"公開鍵 n: {n}", language='')
+                st.code(f"公開鍵 e: {e}", language='')
+                st.code(f"秘密鍵 d: {d}", language='')
+
     st.header("2. 復号（受信者）")
     n_input = st.text_input("公開鍵 n を入力", "")
     d_input = st.text_input("秘密鍵 d を入力", "")
@@ -155,9 +155,9 @@ elif role == "一人で行う":
                 d = mod_inverse(e_val, phi)
                 st.session_state.update({'n': n, 'e': e_val, 'd': d})
                 st.success("鍵生成完了。以下を控えてください。")
-                st.write("**公開鍵 n:**", n)
-                st.write("**公開鍵 e:**", e_val)
-                st.write("**秘密鍵 d:**", d)
+                st.code(f"公開鍵 n: {n}", language='')
+                st.code(f"公開鍵 e: {e_val}", language='')
+                st.code(f"秘密鍵 d: {d}", language='')
 
     # 暗号化ステップ
     st.subheader("2. 暗号化（1人モード）")
