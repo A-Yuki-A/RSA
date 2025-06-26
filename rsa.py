@@ -65,6 +65,7 @@ st.markdown(
 )
 
 # --- 受信者モード ---
+st.markdown("---")
 if role == "受信者":
     st.header("1. 鍵生成（受信者）")
     st.caption("p, q, e はすべて異なる素数を選んでください。")
