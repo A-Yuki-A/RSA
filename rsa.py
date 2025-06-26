@@ -1,5 +1,17 @@
 import streamlit as st
 import base64
+
+# ---- Crypto のインポートと依存チェック ----
+try:
+    from Crypto.PublicKey import RSA
+    from Crypto.Cipher import PKCS1_OAEP
+except ImportError:
+    st.error("エラー: pycryptodome ライブラリが必要です。
+ターミナルで `pip install pycryptodome` を実行してください。")
+    st.stop()
+
+# ---- ページ設定 ----
+import base64
 from Crypto.PublicKey import RSA
 from Crypto.Cipher import PKCS1_OAEP
 
