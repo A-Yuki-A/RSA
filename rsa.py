@@ -47,14 +47,7 @@ role = st.radio("", ["受信者", "送信者", "一人で行う"], horizontal=Tr
 # ---- RSAのキーフィーチャー説明 ----
 st.markdown(
     """
-**公開鍵 (Public Key)**: 誰でも知ることができ、メッセージの暗号化に使用します。
-- 形式: `(n, e)`
-- `n = p × q` で計算される合成数
-- `e` は公開鍵の指数部
-
-**秘密鍵 (Private Key)**: 受信者だけが持つ安全な鍵で、暗号文の復号に使用します。
-- 形式: `d`
-- `d × e ≡ 1 mod φ(n)` を満たす指数部
+p, q は素数である必要があります。
 
 **送信者**  
 個人情報などを送る人。公開鍵 `(n, e)` を用いてメッセージを暗号化。
@@ -126,7 +119,6 @@ if role == "受信者":
             except Exception:
                 st.error("復号に失敗しました。")
 
-# --- 送信者モード ---
 elif role == "送信者":
     st.header("1. 暗号化（送信者）")
     st.caption("受信者から公開鍵 n, e をコピーして入力してください。")
@@ -147,7 +139,7 @@ elif role == "送信者":
                 e_val = int(e_in)
                 size = (n_val.bit_length() + 7) // 8
                 cb = b''.join(
-                    pow(ord(c) - 65, e_val, n_val).to_bytes(size, 'big')
+                    pow(ord(c) - 65, e_val, n_val).to_bytes(size,'big')
                     for c in plain
                 )
                 b64 = base64.b64encode(cb).decode('ascii')
@@ -157,7 +149,6 @@ elif role == "送信者":
             except Exception:
                 st.error("暗号化失敗。鍵と平文を確認してください。")
 
-# --- 一人で行うモード ---
 elif role == "一人で行う":
     st.header("1. 鍵生成 → 2. 暗号化 → 3. 復号")
     st.caption("p, q, e はすべて異なる素数を選んでください。")
@@ -209,7 +200,7 @@ elif role == "一人で行う":
                 e_val = int(e_enc)
                 size = (n_val.bit_length() + 7) // 8
                 cb = b''.join(
-                    pow(ord(c) - 65, e_val, n_val).to_bytes(size, 'big')
+                    pow(ord(c) - 65, e_val, n_val).to_bytes(size,'big')
                     for c in plain1
                 )
                 b64 = base64.b64encode(cb).decode('ascii')
