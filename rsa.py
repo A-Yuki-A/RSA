@@ -175,7 +175,8 @@ elif role == "一人で行う":
             phi = (p1 - 1) * (q1 - 1)
             if gcd(e1, phi) != 1:
                 st.error("e は φ(n) と互いに素である必要があります。")
-            else:\n                st.session_state['n'] = p1 * q1
+            else:
+                st.session_state['n'] = p1 * q1
                 st.session_state['e'] = e1
                 st.session_state['d'] = mod_inverse(e1, phi)
                 st.success("鍵生成完了。以下をコピーして次のステップへ進んでください。")
@@ -234,7 +235,7 @@ elif role == "一人で行う":
                 cb = base64.b64decode(cipher1)
                 size = (n_val.bit_length() + 7) // 8
                 msg = ''.join(
-                    chr(pow(int.from_bytes(cb[i:i+size], 'big'), d_val, n_val) + 65)
+                    chr(pow(int.from_bytes(cb[i:i+size],'big'), d_val, n_val) + 65)
                     for i in range(0, len(cb), size)
                 )
                 st.success(f"復号結果: {msg}")
