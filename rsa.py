@@ -159,4 +159,4 @@ elif role == "送信者":
                 st.code(b64)
                 st.session_state['cipher_str'] = b64
             except Exception:
-                st.error(```
+                st.error("暗号化失敗。鍵と平文を確認してください。")
