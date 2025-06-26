@@ -6,14 +6,8 @@ try:
     from Crypto.PublicKey import RSA
     from Crypto.Cipher import PKCS1_OAEP
 except ImportError:
-    st.error("エラー: pycryptodome ライブラリが必要です。
-ターミナルで `pip install pycryptodome` を実行してください。")
+    st.error("エラー: pycryptodome ライブラリが必要です。\nターミナルで `pip install pycryptodome` を実行してください。")
     st.stop()
-
-# ---- ページ設定 ----
-import base64
-from Crypto.PublicKey import RSA
-from Crypto.Cipher import PKCS1_OAEP
 
 # ---- ページ設定 ----
 st.set_page_config(page_title="PrimeGuard RSA")
@@ -88,7 +82,6 @@ if role == "受信者":
         if p == q or gcd(e, phi) != 1:
             st.error("p, q は異なり、e は φ(n) と互いに素である必要があります。")
         else:
-            # RSAキー生成
             n = p * q
             d = mod_inverse(e, phi)
             key = RSA.construct((n, e, d))
@@ -109,7 +102,7 @@ elif role == "送信者":
     e_in = st.text_input("公開鍵 e", "")
     plain = st.text_input("平文 (UTF-8)", "")
     if st.button("暗号化（送信者）"):
-        if None in (st.session_state.pubkey_rsa):
+        if not st.session_state.get('pubkey_rsa'):
             st.error("まず受信者で鍵生成が必要です。")
         else:
             ct = st.session_state.pubkey_rsa.encrypt(plain.encode())
@@ -120,5 +113,5 @@ elif role == "送信者":
 # --- 一人で行うモード ---
 elif role == "一人で行う":
     st.header("1-3. 一人で体験")
-    # 省略: シングルモード UI
+    # 省略: シングルモード UI ...
     pass
