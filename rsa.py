@@ -92,7 +92,7 @@ if role == "受信者":
             col.write(f"{label}: {val}")
             with btn:
                 components.html(
-                    f"<button onclick=\"navigator.clipboard.writeText('{val}')\">Copy</button>", height=30)
+                    f"<button style=\"border:none;background:none;padding:0;color:blue;cursor:pointer;\" onclick=\"navigator.clipboard.writeText('{val}')\">Copy</button>", height=30)
         # 復号ステップ
         st.header("2. 復号（受信者）")
         d1, d2, d3 = st.columns(3)
@@ -162,7 +162,7 @@ elif role == "一人で行う":
             col.write(f"{label}: {val}")
             with btn:
                 components.html(
-                    f"<button onclick=\"navigator.clipboard.writeText('{val}')\">Copy</button>", height=30)
+                    f"<button style=\"border:none;background:none;padding:0;color:blue;cursor:pointer;\" onclick=\"navigator.clipboard.writeText('{val}')\">Copy</button>", height=30)
         # 暗号化
         st.header("2. 暗号化 (一人)")
         oc1,oc2,oc3 = st.columns(3)
