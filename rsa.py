@@ -99,7 +99,7 @@ if role == "受信者":
         cols[2].write("秘密鍵 d")
         cols[2].write(str(st.session_state.d))
 
-        st.header("2. 復号（受信者）")（受信者）")
+        st.header("2. 復号（受信者）"))
         d1, d2, d3 = st.columns(3)
         with d1:
             n_in = st.text_input("公開鍵 n", key='dec_n')
