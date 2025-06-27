@@ -126,9 +126,9 @@ if role == "受信者":
             f'''<button onclick="navigator.clipboard.writeText('{d_val}');alert('秘密鍵 d をコピーしました')">Copy</button>''',
             height=30
         )
-    # 復号ステップヘッダー
-    st.header("2. 復号（受信者）")（受信者）")("2. 復号（受信者）")
-        d1, d2, d3 = st.columns(3)
+        # 復号ステップヘッダー
+    st.header("2. 復号（受信者）")
+    d1, d2, d3 = st.columns(3)
         with d1:
             n_in = st.text_input("公開鍵 n", key='dec_n')
         with d2:
