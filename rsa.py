@@ -101,34 +101,35 @@ if role == "受信者":
             st.session_state.done_recv = True
             st.success("鍵生成完了。以下を保存してください。")
     if st.session_state.done_recv:
-    # 鍵表示とコピー
-    n_val = st.session_state.n
-    cols_n = st.columns([3, 1])
-    cols_n[0].write(f"公開鍵 n: {n_val}")
-    with cols_n[1]:
-        components.html(
-            f'''<button onclick="navigator.clipboard.writeText('{n_val}');alert('公開鍵 n をコピーしました')">Copy</button>''',
-            height=30
-        )
-    e_val = st.session_state.e
-    cols_e = st.columns([3, 1])
-    cols_e[0].write(f"公開鍵 e: {e_val}")
-    with cols_e[1]:
-        components.html(
-            f'''<button onclick="navigator.clipboard.writeText('{e_val}');alert('公開鍵 e をコピーしました')">Copy</button>''',
-            height=30
-        )
-    d_val = st.session_state.d
-    cols_d = st.columns([3, 1])
-    cols_d[0].write(f"秘密鍵 d: {d_val}")
-    with cols_d[1]:
-        components.html(
-            f'''<button onclick="navigator.clipboard.writeText('{d_val}');alert('秘密鍵 d をコピーしました')">Copy</button>''',
-            height=30
-        )
-        # 復号ステップヘッダー
-    st.header("2. 復号（受信者）")
-    d1, d2, d3 = st.columns(3)
+        # 鍵表示とコピー
+        n_val = st.session_state.n
+        cols_n = st.columns([3, 1])
+        cols_n[0].write(f"公開鍵 n: {n_val}")
+        with cols_n[1]:
+            components.html(
+                f'''<button onclick="navigator.clipboard.writeText('{n_val}');alert('公開鍵 n をコピーしました')">Copy</button>''',
+                height=30
+            )
+        e_val = st.session_state.e
+        cols_e = st.columns([3, 1])
+        cols_e[0].write(f"公開鍵 e: {e_val}")
+        with cols_e[1]:
+            components.html(
+                f'''<button onclick="navigator.clipboard.writeText('{e_val}');alert('公開鍵 e をコピーしました')">Copy</button>''',
+                height=30
+            )
+        d_val = st.session_state.d
+        cols_d = st.columns([3, 1])
+        cols_d[0].write(f"秘密鍵 d: {d_val}")
+        with cols_d[1]:
+            components.html(
+                f'''<button onclick="navigator.clipboard.writeText('{d_val}');alert('秘密鍵 d をコピーしました')">Copy</button>''',
+                height=30
+            )
+
+        # 復号ステップ
+        st.header("2. 復号（受信者）")
+        d1, d2, d3 = st.columns(3)
         with d1:
             n_in = st.text_input("公開鍵 n", key='dec_n')
         with d2:
