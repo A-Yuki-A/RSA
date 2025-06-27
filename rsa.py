@@ -101,59 +101,51 @@ if role == "受信者":
             st.session_state.done_recv = True
             st.success("鍵生成完了。以下を保存してください。")
     if st.session_state.done_recv:
-        # 鍵表示とコピー
-        n_val = st.session_state.n
-        col_n, col_n_btn = st.columns([3,1])
-        col_n.write(f"公開鍵 n: {n_val}")
-        with col_n_btn:
-    components.html(
-        f"""
+    # 鍵表示とコピー
+    n_val = st.session_state.n
+    col_n, col_n_btn = st.columns([3, 1])
+    col_n.write(f"公開鍵 n: {n_val}")
+    with col_n_btn:
+        components.html(f"""
 <button onclick="navigator.clipboard.writeText('{n_val}')">Copy</button>
 """, height=30)
-;alert('公開鍵 n をコピーしました');">Copy</button>
-""", height=30)
-        e_val = st.session_state.e
-        col_e, col_e_btn = st.columns([3,1])
-        col_e.write(f"公開鍵 e: {e_val}")
-        with col_e_btn:
-    components.html(
-        f"""
+    e_val = st.session_state.e
+    col_e, col_e_btn = st.columns([3, 1])
+    col_e.write(f"公開鍵 e: {e_val}")
+    with col_e_btn:
+        components.html(f"""
 <button onclick="navigator.clipboard.writeText('{e_val}')">Copy</button>
 """, height=30)
-;alert('公開鍵 e をコピーしました');">Copy</button>
-""", height=30)
-        d_val = st.session_state.d
-        col_d, col_d_btn = st.columns([3,1])
-        col_d.write(f"秘密鍵 d: {d_val}")
-        with col_d_btn:
-    components.html(
-        f"""
+    d_val = st.session_state.d
+    col_d, col_d_btn = st.columns([3, 1])
+    col_d.write(f"秘密鍵 d: {d_val}")
+    with col_d_btn:
+        components.html(f"""
 <button onclick="navigator.clipboard.writeText('{d_val}')">Copy</button>
-""", height=30);alert('秘密鍵 d をコピーしました');">Copy</button>
 """, height=30)
 
-        # 復号ステップを表示
-        st.header("2. 復号（受信者）")
-        d1, d2, d3 = st.columns(3)
-        with d1:
-            n_in = st.text_input("公開鍵 n", key='dec_n')
-        with d2:
-            d_in = st.text_input("秘密鍵 d", key='dec_d')
-        with d3:
-            c_in = st.text_area("暗号文(Base64)", key='dec_c')
-        if st.button("復号（受信者）", key='dec_btn'):
-            try:
-                n_val = int(n_in)
-                d_val = int(d_in)
-                cb = base64.b64decode(c_in)
-                size = (n_val.bit_length() + 7) // 8
-                msg = ''.join(
-                    chr(pow(int.from_bytes(cb[i:i+size], 'big'), d_val, n_val) + 65)
-                    for i in range(0, len(cb), size)
-                )
-                st.success(f"復号結果: {msg}")
-            except:
-                st.error("復号に失敗しました。")
+    # 復号ステップを表示
+    st.header("2. 復号（受信者）")
+    d1, d2, d3 = st.columns(3)
+    with d1:
+        n_in = st.text_input("公開鍵 n", key='dec_n')
+    with d2:
+        d_in = st.text_input("秘密鍵 d", key='dec_d')
+    with d3:
+        c_in = st.text_area("暗号文(Base64)", key='dec_c')
+    if st.button("復号（受信者）", key='dec_btn'):
+        try:
+            n_dec_val = int(n_in)
+            d_dec_val = int(d_in)
+            cb = base64.b64decode(c_in)
+            size = (n_dec_val.bit_length() + 7) // 8
+            msg = ''.join(
+                chr(pow(int.from_bytes(cb[i:i+size], 'big'), d_dec_val, n_dec_val) + 65)
+                for i in range(0, len(cb), size)
+            )
+            st.success(f"復号結果: {msg}")
+        except:
+            st.error("復号に失敗しました。")
 
 # --- 送信者モード ---
 elif role == "送信者":
