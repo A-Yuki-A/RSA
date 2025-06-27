@@ -206,15 +206,37 @@ elif role == "一人で行う":
             st.success("鍵生成完了。以下をコピーしてください。")
 
     if st.session_state.done_solo:
-        cols = st.columns(3)
-        cols[0].write("公開鍵 n1")
-        cols[0].code(str(st.session_state.n))
-        cols[1].write("公開鍵 e1")
-        cols[1].code(str(st.session_state.e))
-        cols[2].write("秘密鍵 d1")
-        cols[2].code(str(st.session_state.d))
+    # 鍵表示とコピー（一人で体験モード）
+    n1_val = st.session_state.n
+    col_n1, col_n1_btn = st.columns([3, 1])
+    col_n1.write(f"公開鍵 n1: {n1_val}")
+    with col_n1_btn:
+        components.html(
+            f"""
+<button onclick="navigator.clipboard.writeText('{n1_val}')">Copy</button>
+""", height=30
+        )
+    e1_val = st.session_state.e
+    col_e1, col_e1_btn = st.columns([3, 1])
+    col_e1.write(f"公開鍵 e1: {e1_val}")
+    with col_e1_btn:
+        components.html(
+            f"""
+<button onclick="navigator.clipboard.writeText('{e1_val}')">Copy</button>
+""", height=30
+        )
+    d1_val = st.session_state.d
+    col_d1, col_d1_btn = st.columns([3, 1])
+    col_d1.write(f"秘密鍵 d1: {d1_val}")
+    with col_d1_btn:
+        components.html(
+            f"""
+<button onclick="navigator.clipboard.writeText('{d1_val}')">Copy</button>
+""", height=30
+        )
 
-        st.subheader("2. 暗号化 (一人)")
+    # 暗号化ステップ
+    st.subheader("2. 暗号化 (一人)")("2. 暗号化 (一人)")
         ec1, ec2, ec3 = st.columns(3)
         with ec1:
             n_enc = st.text_input("公開鍵 n", key='solo_enc_n')
