@@ -103,31 +103,31 @@ if role == "受信者":
     if st.session_state.done_recv:
         # 鍵表示とコピー
         n_val = st.session_state.n
-        cols_n = st.columns([3, 1])
-        cols_n[0].write(f"公開鍵 n: {n_val}")
-        with cols_n[1]:
+        col_n, col_n_btn = st.columns([3,1])
+        col_n.write(f"公開鍵 n: {n_val}")
+        with col_n_btn:
             components.html(
-                f'''<button onclick="navigator.clipboard.writeText('{n_val}');alert('公開鍵 n をコピーしました')">Copy</button>''',
-                height=30
-            )
+                f"""
+<button onclick="navigator.clipboard.writeText('{n_val}');alert('公開鍵 n をコピーしました');">Copy</button>
+""", height=30)
         e_val = st.session_state.e
-        cols_e = st.columns([3, 1])
-        cols_e[0].write(f"公開鍵 e: {e_val}")
-        with cols_e[1]:
+        col_e, col_e_btn = st.columns([3,1])
+        col_e.write(f"公開鍵 e: {e_val}")
+        with col_e_btn:
             components.html(
-                f'''<button onclick="navigator.clipboard.writeText('{e_val}');alert('公開鍵 e をコピーしました')">Copy</button>''',
-                height=30
-            )
+                f"""
+<button onclick="navigator.clipboard.writeText('{e_val}');alert('公開鍵 e をコピーしました');">Copy</button>
+""", height=30)
         d_val = st.session_state.d
-        cols_d = st.columns([3, 1])
-        cols_d[0].write(f"秘密鍵 d: {d_val}")
-        with cols_d[1]:
+        col_d, col_d_btn = st.columns([3,1])
+        col_d.write(f"秘密鍵 d: {d_val}")
+        with col_d_btn:
             components.html(
-                f'''<button onclick="navigator.clipboard.writeText('{d_val}');alert('秘密鍵 d をコピーしました')">Copy</button>''',
-                height=30
-            )
+                f"""
+<button onclick="navigator.clipboard.writeText('{d_val}');alert('秘密鍵 d をコピーしました');">Copy</button>
+""", height=30)
 
-        # 復号ステップ
+        # 復号ステップを表示
         st.header("2. 復号（受信者）")
         d1, d2, d3 = st.columns(3)
         with d1:
