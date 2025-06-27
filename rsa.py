@@ -9,11 +9,6 @@ try:
     from Crypto.Cipher import PKCS1_OAEP
 except ImportError:
     use_crypto = False
-    st.warning(
-        "pycryptodome ライブラリが見つかりません。" +
-        "基本的な RSA 処理で動作します。\n" +
-        "本番用途には `pip install pycryptodome` が必要です。"
-    )
 
 # ---- ページ設定 ----
 st.set_page_config(page_title="PrimeGuard RSA")
