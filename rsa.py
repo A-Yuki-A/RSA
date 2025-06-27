@@ -1,5 +1,6 @@
 import streamlit as st
 import base64
+import streamlit.components.v1 as components
 
 # ---- ページ設定 ----
 st.set_page_config(page_title="PrimeGuard RSA")
@@ -103,12 +104,21 @@ if role == "受信者":
         cols = st.columns(3)
         cols[0].write("公開鍵 n")
         cols[0].write(str(st.session_state.n))
+        components.html(f"""
+<button onclick="navigator.clipboard.writeText('{st.session_state.n}');alert('公開鍵 n をコピーしました')">Copy n</button>
+""", height=50)
         cols[1].write("公開鍵 e")
         cols[1].write(str(st.session_state.e))
+        components.html(f"""
+<button onclick="navigator.clipboard.writeText('{st.session_state.e}');alert('公開鍵 e をコピーしました')">Copy e</button>
+""", height=50)
         cols[2].write("秘密鍵 d")
         cols[2].write(str(st.session_state.d))
+        components.html(f"""
+<button onclick="navigator.clipboard.writeText('{st.session_state.d}');alert('秘密鍵 d をコピーしました')">Copy d</button>
+""", height=50)
 
-        st.header("2. 復号（受信者）")
+        st.header("2. 復号（受信者）")（受信者）")
         d1, d2, d3 = st.columns(3)
         with d1:
             n_in = st.text_input("公開鍵 n", key='dec_n')
