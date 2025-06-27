@@ -58,20 +58,22 @@ role = st.radio("", ["受信者", "送信者", "一人で行う"], horizontal=Tr
 # ---- RSA の説明 ----
 st.markdown(
     """
-p, q は素数である必要があります。
+RSA暗号では、まず2つの大きな素数 p, q を用意します。
+`n = p × q` を計算し、公開鍵と秘密鍵の基礎とします。
 
-**公開鍵 (Public Key)**: メッセージを暗号化するための鍵
-- `n = p × q` で計算される合成数
-- `e` は `(p-1)(q-1)` と互いに素な自然数
+公開鍵 (n, e)：メッセージを暗号化するための鍵
 
-**秘密鍵 (Private Key)**: メッセージを復号するための鍵
-- `d` は `e × d を (p-1)(q-1) で割った余りが 1 となる自然数`
+e は `(p−1)(q−1)` と互いに素な自然数です
 
-**送信者**  
-個人情報などを送る人。公開鍵 `(n, e)` を用いてメッセージを暗号化。
+秘密鍵 (n, d)：メッセージを復号するための鍵
 
-**受信者**  
-メッセージを受け取る人。秘密鍵 `d` と公開鍵 `n` を用いて受信した暗号文を復号。
+d は `e × d ≡ 1 (mod (p−1)(q−1))` を満たす自然数です（e の逆元）
+
+暗号化： `C ≡ M^e mod n`
+復号： `M ≡ C^d mod n`
+
+送信者は受信者の「公開鍵」を使って暗号化し、
+受信者は自分の「秘密鍵」で復号します。
 """
 )
 
@@ -106,9 +108,29 @@ if role == "受信者":
                 st.session_state.privkey_rsa = (n, d)
             st.session_state.done_recv = True
             st.success("鍵生成完了。以下を保存してください。")
-            cols = st.columns(2)
-            cols[0].write(f"公開鍵 n: {n}\ne: {e}")
-            cols[1].write(f"秘密鍵 d: {d}")
+            # 鍵表示とコピーボタン
+            cols = st.columns(3)
+            # 公開鍵 n
+            cols[0].write("公開鍵 n")
+            cols[0].code(str(n))
+            components.html(
+                f"""
+<button onclick="navigator.clipboard.writeText(`{n}`).then(()=>alert('公開鍵 n をコピーしました'))">Copy n</button>
+""", height=50)
+            # 公開鍵 e
+            cols[1].write("公開鍵 e")
+            cols[1].code(str(e))
+            components.html(
+                f"""
+<button onclick="navigator.clipboard.writeText(`{e}`).then(()=>alert('公開鍵 e をコピーしました'))">Copy e</button>
+""", height=50)
+            # 秘密鍵 d
+            cols[2].write("秘密鍵 d")
+            cols[2].code(str(d))
+            components.html(
+                f"""
+<button onclick="navigator.clipboard.writeText(`{d}`).then(()=>alert('秘密鍵 d をコピーしました'))">Copy d</button>
+""", height=50)
 
     if st.session_state.done_recv:
         st.header("2. 復号（受信者）")
