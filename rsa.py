@@ -146,7 +146,7 @@ elif role == "送信者":
                 ct = st.session_state.pubkey_rsa.encrypt(plain.encode())
                 b64 = base64.b64encode(ct).decode()
                 st.code(b64)
-components.html(f"""
+                components.html(f"""
 <button onclick="navigator.clipboard.writeText(`{b64}`).then(()=>alert('コピーしました'));">Copy</button>
 """, height=50)
                 st.session_state.cipher_str = b64
