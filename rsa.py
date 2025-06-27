@@ -81,14 +81,17 @@ p, q は素数である必要があります。
 st.markdown("---")
 if role == "受信者":
     st.header("1. 鍵生成（受信者）")
-    st.caption("p, q は異なる素数を選び、e は 5000～6000 の任意整数を入力してください。")
+    st.caption("p, q は異なる素数を選択後、利用可能な公開鍵 e を選んでください。")
     c1, c2, c3 = st.columns(3)
     with c1:
         p = st.selectbox("素数 p", primes)
     with c2:
         q = st.selectbox("素数 q", primes)
     with c3:
-        e = st.number_input("公開鍵 e", min_value=5001, max_value=5999, step=1)
+        # φ(n) に対して e を動的に選択
+        phi = (p - 1) * (q - 1)
+        e_options = [i for i in range(5001, 6000) if gcd(i, phi) == 1 and i != p and i != q]
+        e = st.selectbox("公開鍵 e", e_options)
 
     if st.button("鍵生成（受信者）"):
         phi = (p - 1) * (q - 1)
