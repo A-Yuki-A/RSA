@@ -165,6 +165,82 @@ elif role == "送信者":
 
 # --- 一人で行うモード ---
 elif role == "一人で行う":
-    st.header("1-3. 一人で体験")
-    st.caption("一連のステップをひとりで体験できます。")
-    # 統合 UI の実装省略...
+    # --- 一人で行うモード ---
+    st.header("1. 鍵生成 → 2. 暗号化 → 3. 復号")
+    st.caption("p, q は異なる素数を選択後、利用可能な公開鍵 e を選んでください。")
+    cols = st.columns(3)
+    with cols[0]:
+        p1 = st.selectbox("素数 p", primes, key='solo_p')
+    with cols[1]:
+        q1 = st.selectbox("素数 q", primes, key='solo_q')
+    with cols[2]:
+        phi1 = (p1 - 1) * (q1 - 1)
+        e_options1 = [i for i in range(5001, 6000) if gcd(i, phi1) == 1 and i not in (p1, q1)]
+        e1 = st.selectbox("公開鍵 e", e_options1, key='solo_e')
+
+    if st.button("鍵生成（1人）"):
+        if p1 == q1 or e1 in (p1, q1):
+            st.error("p, q, e はすべて異なる値を選んでください。")
+        else:
+            d1 = mod_inverse(e1, phi1)
+            n1 = p1 * q1
+            st.session_state['n'] = n1
+            st.session_state['e'] = e1
+            st.session_state['d'] = d1
+            st.session_state['done_solo'] = True
+            st.success("鍵生成完了。以下を控えてください。")
+    if st.session_state.get('done_solo'):
+        # 鍵表示
+        sc = st.columns([2, 3])
+        sc[0].write("公開鍵 n (n = p × q)")
+        sc[0].caption(f"p={p1}, q={q1}")
+        sc[1].code(str(st.session_state['n']))
+        sc = st.columns([2, 3])
+        sc[0].write("公開鍵 e")
+        sc[1].code(str(st.session_state['e']))
+        sc = st.columns([2, 3])
+        sc[0].write("秘密鍵 d (受信者のみ)")
+        sc[1].code(str(st.session_state['d']))
+
+    st.subheader("2. 暗号化（1人）")
+    enc = st.columns(3)
+    with enc[0]: n_enc = st.text_input("公開鍵 n を入力", "", key='solo_n')
+    with enc[1]: e_enc = st.text_input("公開鍵 e を入力", "", key='solo_e_input')
+    with enc[2]: plain1 = st.text_input("平文 (A-Z、最大5文字)", "", key='solo_plain')
+    if st.button("暗号化（1人）"):
+        if not n_enc or not e_enc or not plain1:
+            st.error("全て入力してください。")
+        else:
+            try:
+                n_val = int(n_enc)
+                e_val = int(e_enc)
+                size = (n_val.bit_length() + 7) // 8
+                cb = b''.join(pow(ord(c)-65, e_val, n_val).to_bytes(size,'big') for c in plain1)
+                b64 = base64.b64encode(cb).decode('ascii')
+                st.code(b64)
+                components.html(
+                    f"""
+<button onclick="navigator.clipboard.writeText(`{b64}`).then(()=>alert('コピーしました'))">Copy</button>
+""", height=50)
+                st.session_state['cipher_str'] = b64
+            except:
+                st.error("暗号化エラー。鍵と平文を確認してください。")
+
+    st.subheader("3. 復号（1人）")
+    dec = st.columns(3)
+    with dec[0]: n_dec = st.text_input("公開鍵 n を入力", "", key='solo_n_dec')
+    with dec[1]: d_dec = st.text_input("秘密鍵 d を入力", "", key='solo_d_dec')
+    with dec[2]: cipher1 = st.text_area("暗号文 (Base64)", "", key='solo_cipher')
+    if st.button("復号（1人）"):
+        if not n_dec or not d_dec or not cipher1:
+            st.error("全て入力してください。")
+        else:
+            try:
+                n_val = int(n_dec)
+                d_val = int(d_dec)
+                cb = base64.b64decode(cipher1)
+                size = (n_val.bit_length() + 7) // 8
+                msg = ''.join(chr(pow(int.from_bytes(cb[i:i+size],'big'), d_val, n_val) + 65) for i in range(0, len(cb), size))
+                st.success(f"復号結果: {msg}")
+            except:
+                st.error("復号エラー。鍵と暗号文を確認してください。")
