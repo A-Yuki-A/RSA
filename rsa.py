@@ -3,6 +3,15 @@ import base64
 
 # ---- ページ設定 ----
 st.set_page_config(page_title="PrimeGuard RSA")
+# ---- フォントサイズの調整 ----
+st.markdown(
+    """
+    <style>
+    /* 通常の段落テキストのフォントサイズ */
+    p { font-size: 15px; }
+    </style>
+    """, unsafe_allow_html=True
+)
 
 # ---- ヘルパー関数 ----
 def generate_primes(n):
