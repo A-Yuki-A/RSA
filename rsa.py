@@ -51,11 +51,11 @@ RSA暗号では2つの大きな素数 p, q を用意し、
 
 **公開鍵 (n, e)**: メッセージを暗号化する鍵
 
-  ※ e は `(p-1)(q-1)` と互いに素な自然数です
+ e は `(p-1)(q-1)` と互いに素な自然数です
 
 **秘密鍵 (d)**: メッセージを復号する鍵
 
-  ※ d は `e × d ≡ 1 (mod (p-1)(q-1))` を満たす自然数です
+ d は `e × d ≡ 1 (mod (p-1)(q-1))` を満たす自然数です
 
 暗号化: `C ≡ M^e mod n`
 
@@ -93,13 +93,13 @@ if role == "受信者":
     if st.session_state.done_recv:
         cols = st.columns(3)
         cols[0].write("公開鍵 n")
-        cols[0].code(str(st.session_state.n))
+        cols[0].write(str(st.session_state.n))
         cols[1].write("公開鍵 e")
-        cols[1].code(str(st.session_state.e))
+        cols[1].write(str(st.session_state.e))
         cols[2].write("秘密鍵 d")
-        cols[2].code(str(st.session_state.d))
+        cols[2].write(str(st.session_state.d))
 
-        st.header("2. 復号（受信者）")
+        st.header("2. 復号（受信者）")（受信者）")
         d1, d2, d3 = st.columns(3)
         with d1:
             n_in = st.text_input("公開鍵 n", key='dec_n')
