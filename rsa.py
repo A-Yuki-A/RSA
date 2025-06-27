@@ -118,7 +118,7 @@ if role == "受信者":
 <button onclick="navigator.clipboard.writeText('{st.session_state.d}');alert('秘密鍵 d をコピーしました')">Copy d</button>
 """, height=50)
 
-        st.header("2. 復号（受信者）")（受信者）")
+        st.header("2. 復号（受信者）")
         d1, d2, d3 = st.columns(3)
         with d1:
             n_in = st.text_input("公開鍵 n", key='dec_n')
