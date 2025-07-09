@@ -129,7 +129,7 @@ elif role == "送信者":
     st.header("1. 暗号化 (送信者)")
     nv = st.text_input("受信者の公開鍵 n", key='enc_n')
     ev = st.text_input("受信者の公開鍵 e", key='enc_e')
-    plain = st.text_input("平文 (A-Z 最大5文字)", max_chars=5, key='enc_msg')
+    plain = st.text_input("平文 (A-Z 最大5文字)（暗号化したい文章）", max_chars=5, key='enc_msg')
     if st.button("暗号化", key='enc_btn'):
         try:
             nv_i = int(nv); ev_i = int(ev)
