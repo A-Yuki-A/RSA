@@ -32,7 +32,6 @@ def mod_inverse(a, m):
     return x % m if g == 1 else None
 
 # --- 素数リスト (5000～6000) ---
-# 実際の RSA ではもっと大きな素数を使います
 primes = [p for p in generate_primes(6000) if 5000 <= p <= 6000]
 
 # --- セッション初期化 ---
@@ -65,7 +64,6 @@ if role == "受信者":
         q = st.selectbox("素数 q", primes, key='recv_q')
     with c3:
         phi = (p - 1) * (q - 1)
-        # よく使われる e を先頭に
         common_es = [3, 17, 65537]
         e_candidates = [e for e in common_es if gcd(e, phi) == 1]
         e_list = e_candidates + [i for i in range(5001, 6000) if gcd(i, phi) == 1 and i not in (p, q)]
@@ -79,10 +77,10 @@ if role == "受信者":
             st.session_state.update({'n': n, 'e': e, 'd': d, 'done_recv': True})
             st.success("鍵生成完了。次の値をコピーして送信者に渡してください。")
     if st.session_state.done_recv:
-        st.subheader("生成された鍵")
-        st.text_input("公開鍵 n", value=st.session_state.n, disabled=True)
-        st.text_input("公開鍵 e", value=st.session_state.e, disabled=True)
-        st.text_input("秘密鍵 d", value=st.session_state.d, disabled=True)
+        st.subheader("生成された鍵 (クリックしてコピー)")
+        st.text_input("公開鍵 n", value=str(st.session_state.n), key='copy_recv_n')
+        st.text_input("公開鍵 e", value=str(st.session_state.e), key='copy_recv_e')
+        st.text_input("秘密鍵 d", value=str(st.session_state.d), key='copy_recv_d')
 
         st.header("2. 復号 (受信者)")
         nv = st.text_input("公開鍵 n", key='dec_n')
@@ -145,9 +143,10 @@ elif role == "一人で実験":
             st.session_state.update({'n': n1, 'e': e1, 'd': d1, 'done_solo': True})
             st.success("鍵生成完了。次の値をコピーしてください。")
     if st.session_state.done_solo:
-        st.text_input("公開鍵 n1", value=st.session_state.n, disabled=True)
-        st.text_input("公開鍵 e1", value=st.session_state.e, disabled=True)
-        st.text_input("秘密鍵 d1", value=st.session_state.d, disabled=True)
+        st.subheader("生成された鍵 (クリックしてコピー)")
+        st.text_input("公開鍵 n1", value=str(st.session_state.n), key='copy_solo_n1')
+        st.text_input("公開鍵 e1", value=str(st.session_state.e), key='copy_solo_e1')
+        st.text_input("秘密鍵 d1", value=str(st.session_state.d), key='copy_solo_d1')
 
         st.header("2. 暗号化 (一人)")
         n_enc = st.text_input("公開鍵 n", key='solo_enc_n')
