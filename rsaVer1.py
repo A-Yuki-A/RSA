@@ -1,5 +1,6 @@
 import streamlit as st
 import base64
+import streamlit.components.v1 as components
 
 # --- ページ設定 ---
 st.set_page_config(page_title="PrimeGuard RSA デモ (実際はもっと大きな素数)")
@@ -77,11 +78,14 @@ if role == "受信者":
             st.session_state.update({'n': n, 'e': e, 'd': d, 'done_recv': True})
             st.success("鍵生成完了。次の値をコピーして送信者に渡してください。")
     if st.session_state.done_recv:
-        st.subheader("生成された鍵 (クリックしてコピー)")
-        st.text_input("公開鍵 n", value=str(st.session_state.n), key='copy_recv_n')
-        st.text_input("公開鍵 e", value=str(st.session_state.e), key='copy_recv_e')
-        st.text_input("秘密鍵 d", value=str(st.session_state.d), key='copy_recv_d')
-
+        st.subheader("生成された鍵 (コピー) ")
+        for label, val in [("公開鍵 n", st.session_state.n), ("公開鍵 e", st.session_state.e), ("秘密鍵 d", st.session_state.d)]:
+            col, btn = st.columns([3,1])
+            col.text_input(label, value=str(val), disabled=True)
+            with btn:
+                components.html(
+                    f"<button style='border:none;background:none;color:blue;cursor:pointer;' onclick=\"navigator.clipboard.writeText('{val}')\">Copy</button>", height=30
+                )
         st.header("2. 復号 (受信者)")
         nv = st.text_input("公開鍵 n", key='dec_n')
         dv = st.text_input("秘密鍵 d", key='dec_d')
@@ -143,10 +147,14 @@ elif role == "一人で実験":
             st.session_state.update({'n': n1, 'e': e1, 'd': d1, 'done_solo': True})
             st.success("鍵生成完了。次の値をコピーしてください。")
     if st.session_state.done_solo:
-        st.subheader("生成された鍵 (クリックしてコピー)")
-        st.text_input("公開鍵 n1", value=str(st.session_state.n), key='copy_solo_n1')
-        st.text_input("公開鍵 e1", value=str(st.session_state.e), key='copy_solo_e1')
-        st.text_input("秘密鍵 d1", value=str(st.session_state.d), key='copy_solo_d1')
+        st.subheader("生成された鍵 (コピー)")
+        for label, val in [("公開鍵 n1", st.session_state.n), ("公開鍵 e1", st.session_state.e), ("秘密鍵 d1", st.session_state.d)]:
+            col, btn = st.columns([3,1])
+            col.text_input(label, value=str(val), disabled=True)
+            with btn:
+                components.html(
+                    f"<button style='border:none;background:none;color:blue;cursor:pointer;' onclick=\"navigator.clipboard.writeText('{val}')\">Copy</button>", height=30
+                )
 
         st.header("2. 暗号化 (一人)")
         n_enc = st.text_input("公開鍵 n", key='solo_enc_n')
