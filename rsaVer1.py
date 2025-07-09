@@ -51,14 +51,23 @@ st.markdown("""
 2. [送信者] 公開鍵 (n, e) でメッセージを暗号化
 3. [受信者] 秘密鍵 d で復号
 """)
-# フロー図表示
-st.markdown("""
-```plaintext
-受信者 ── 鍵生成 (p, q → n, e, d) ──> 公開鍵 (n, e)
-公開鍵 (n, e) ── 暗号化 (送信者) ──> 暗号文 (C)
-暗号文 (C) ── 復号 (受信者) ──> 平文 (M)
-秘密鍵 (d) は受信者のみ保持
-```
+
+# --- フローチャート表示 ---
+st.graphviz_chart("""
+digraph RSA {
+    rankdir=LR;
+    node [shape=box, style=rounded, fontname="Meiryo"];
+    Receiver [label="受信者\n(p, q 選択)"];
+    KeyGen   [label="鍵生成\n(n, e, d)"];
+    PubKey   [label="公開鍵\n(n, e)"];
+    Sender   [label="送信者\n暗号化"];
+    Cipher   [label="暗号文\n(C)"];
+    Decrypt  [label="復号\n(M)"];
+    Secret   [label="秘密鍵\n(d)", shape=note, fontcolor="#555555"];
+    Receiver -> KeyGen -> PubKey;
+    PubKey -> Sender -> Cipher;
+    Cipher -> Decrypt -> Receiver;
+}
 """)
 
 # --- モード選択 ---
@@ -179,7 +188,7 @@ elif role == "一人で実験":
         st.header("2. 暗号化 (一人)")
         n_enc = st.text_input("公開鍵 n", key='solo_enc_n')
         e_enc = st.text_input("公開鍵 e", key='solo_enc_e')
-        plain1 = st.text_input("平文 (A-Z 最大5文字)", max_chars=5, key='solo_plain1')
+        plain1 = st.text_input("平文 (A-Z 最大5文字)（暗号化したい文章）", max_chars=5, key='solo_plain1')
         if st.button("暗号化 (一人)", key='solo_enc_btn'):
             try:
                 nv2 = int(n_enc); ev2 = int(e_enc)
