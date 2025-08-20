@@ -7,6 +7,12 @@ import streamlit.components.v1 as components
 # --- ページ設定 ---
 st.set_page_config(page_title="PrimeGuard RSA")
 
+# --- 文字集合（A-Z と 0-9 をサポート）---
+ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+CHAR_TO_VAL = {ch: i for i, ch in enumerate(ALPHABET)}
+VAL_TO_CHAR = list(ALPHABET)
+ALPHABET_DESC = "A–Z と 0–9 のみ（最大5文字）"
+
 # --- ヘルパー関数 ---
 def generate_primes(n: int):
     sieve = [True] * (n + 1)
@@ -32,6 +38,34 @@ def mod_inverse(a: int, m: int):
     x, _, g = egcd(a, m)
     return x % m if g == 1 else None
 
+def e_candidates(phi: int, p: int, q: int):
+    # 教材用：5001〜5999 から φ(n) と互いに素、かつ p,q と異なる値
+    return [i for i in range(5001, 6000) if gcd(i, phi) == 1 and i not in (p, q)]
+
+def encrypt_blocks(plaintext: str, n: int, e: int) -> str:
+    """ALPHABET 上の文字を1文字ずつ RSA で暗号化し、Base64 文字列で返す。"""
+    size = (n.bit_length() + 7) // 8
+    cb = b''.join(
+        pow(CHAR_TO_VAL[c], e, n).to_bytes(size, 'big')
+        for c in plaintext
+    )
+    return base64.b64encode(cb).decode()
+
+def decrypt_blocks(b64: str, n: int, d: int) -> str:
+    """Base64 暗号文を復号し、ALPHABET の文字列に戻す。"""
+    cb = base64.b64decode(b64)
+    size = (n.bit_length() + 7) // 8
+    if size == 0 or len(cb) % size != 0:
+        raise ValueError("ブロック長が一致しません（鍵 n が違う可能性）。")
+    chars = []
+    for i in range(0, len(cb), size):
+        block = cb[i:i + size]
+        m = pow(int.from_bytes(block, 'big'), d, n)
+        if not (0 <= m < len(ALPHABET)):
+            raise ValueError("復号値が想定範囲外です（鍵の組み合わせを確認）。")
+        chars.append(VAL_TO_CHAR[m])
+    return ''.join(chars)
+
 # --- 素数リスト (5000～6000) ---
 primes = [p for p in generate_primes(6000) if 5000 <= p <= 6000]
 
@@ -54,7 +88,7 @@ RSA暗号ではまず2つの大きな素数 p, q を用意し、n = p × q を�
 
 送信者は公開鍵で暗号化し、受信者は秘密鍵で復号します。
 
-> 教材上の注意: ここでは**パディングなしで1文字ずつ暗号化**する単純化モデルです（実運用のRSAではOAEP等のパディングを用い、しばしば鍵交換や署名に用いられ、本文は共通鍵で暗号化します）。
+> 教材上の注意: ここでは**パディングなしで1文字ずつ暗号化**する体験用モデルです（実運用のRSAではOAEP等のパディングを用い、本文は共通鍵で暗号化するのが一般的です）。
 """
 )
 
@@ -65,29 +99,41 @@ st.markdown("---")
 # ========== 受信者モード ==========
 if role == "受信者":
     st.header("1. 鍵生成（受信者）")
-    st.caption("p, q は異なる素数を選び、φ(n) と互いに素な公開鍵 e を選択してください。")
+    st.caption("p, q は異なる素数を選び、φ(n) と互いに素な公開鍵 e を設定してください。e が勝手に変わらないよう、数値入力にしています。")
+
     c1, c2, c3 = st.columns(3)
     with c1:
         p = st.selectbox("素数 p", primes, key='recv_p')
     with c2:
         q = st.selectbox("素数 q", primes, key='recv_q')
     with c3:
-        phi = (p - 1) * (q - 1)
-        # 教材用に 5001–5999 から φ(n) と互いに素な e を抽出
-        e_list = [i for i in range(5001, 6000) if gcd(i, phi) == 1 and i not in (p, q)]
-        e = st.selectbox("公開鍵 e", e_list, key='recv_e')
+        # e は number_input で固定入力（p,q を変えても自動変更しない）
+        e_default = int(st.session_state.get('recv_e', 5001) or 5001)
+        e = st.number_input("公開鍵 e (5001–5999)", min_value=5001, max_value=5999,
+                            value=e_default, step=1, key='recv_e')
+
+    phi = (p - 1) * (q - 1)
+    valid_now = (gcd(e, phi) == 1) and (e not in (p, q))
+    st.caption(f"現在の e の妥当性: {'OK' if valid_now else 'NG'} / φ(n)={phi}")
+
+    with st.expander("e の候補を見る（5001–5999）"):
+        st.write(e_candidates(phi, p, q)[:50])
 
     if st.button("鍵生成", key='recv_gen'):
         if p == q:
             st.error("p と q は異なる素数を選んでください。")
+        elif not valid_now:
+            st.error("e は φ(n) と互いに素で、p と q とも異なる必要があります。")
         else:
             n = p * q
             d = mod_inverse(e, phi)
-            st.session_state.update({'n': n, 'e': e, 'd': d, 'done_recv': True})
-            # 復号欄のデフォルト値としても使えるよう事前設定
-            st.session_state['dec_n'] = str(n)
-            st.session_state['dec_d'] = str(d) if d is not None else ""
-            st.success("鍵生成完了。以下の値をコピーしてください。")
+            if d is None:
+                st.error("d（逆元）が求まりませんでした。e と p,q を見直してください。")
+            else:
+                st.session_state.update({'n': n, 'e': e, 'd': d, 'done_recv': True})
+                st.session_state['dec_n'] = str(n)
+                st.session_state['dec_d'] = str(d)
+                st.success("鍵生成完了。以下の値をコピーしてください。")
 
     if st.session_state.done_recv:
         # 鍵表示とコピーボタン
@@ -117,49 +163,35 @@ if role == "受信者":
         if st.button("復号", key='dec_btn'):
             try:
                 nv, dv = int(n_in), int(d_in)
-                cb = base64.b64decode(c_in)
-                size = (nv.bit_length() + 7) // 8
-                # ブロックごとに復号して A(65) を足して文字に戻す
-                msg = ''.join(
-                    chr(pow(int.from_bytes(cb[i:i + size], 'big'), dv, nv) + 65)
-                    for i in range(0, len(cb), size)
-                )
+                msg = decrypt_blocks(c_in, nv, dv)
                 st.success(f"復号結果: {msg}")
-            except ValueError:
-                st.error("n や d が整数ではありません。")
+            except ValueError as ve:
+                st.error(str(ve))
             except binascii.Error:
                 st.error("Base64 の形式が正しくありません。")
-            except Exception as e:
-                st.error(f"復号に失敗しました: {e}")
+            except Exception as e2:
+                st.error(f"復号に失敗しました: {e2}")
 
 # ========== 送信者モード ==========
 elif role == "送信者":
     st.header("1. 暗号化（送信者）")
-    st.caption("受信者の公開鍵を入力してください。平文は A–Z のみ（最大5文字）。")
+    st.caption(f"受信者の公開鍵を入力してください。平文は {ALPHABET_DESC}。")
     s1, s2, s3 = st.columns(3)
     with s1:
         n_in = st.text_input("公開鍵 n", value=str(st.session_state.get('n') or ""), key='enc_n')
     with s2:
         e_in = st.text_input("公開鍵 e", value=str(st.session_state.get('e') or ""), key='enc_e')
     with s3:
-        plain = st.text_input("平文 (A–Z 最大5文字)", max_chars=5, key='enc_msg')
+        plain = st.text_input(f"平文 ({ALPHABET_DESC})", max_chars=5, key='enc_msg')
 
     if st.button("暗号化", key='enc_btn'):
         try:
             nv, ev = int(n_in), int(e_in)
-
-            # 入力検証: A–Z のみ
             plain_upper = (plain or "").upper()
-            if not re.fullmatch(r"[A-Z]{1,5}", plain_upper):
-                st.error("平文は A–Z のみ（1〜5文字）で入力してください。")
+            if not re.fullmatch(r"[A-Z0-9]{1,5}", plain_upper):
+                st.error(f"平文は {ALPHABET_DESC} で入力してください。")
             else:
-                size = (nv.bit_length() + 7) // 8
-                # 1文字ずつ: A→0, B→1, ... Z→25 にマッピングして暗号化
-                cb = b''.join(
-                    pow(ord(c) - 65, ev, nv).to_bytes(size, 'big')
-                    for c in plain_upper
-                )
-                b64 = base64.b64encode(cb).decode()
+                b64 = encrypt_blocks(plain_upper, nv, ev)
                 st.subheader("暗号文 (Base64)")
                 st.code(b64)
                 st.session_state.cipher_str = b64
@@ -194,23 +226,35 @@ elif role == "一人で行う":
     with c2:
         q = st.selectbox("素数 q", primes, key='solo_q')
     with c3:
-        phi1 = (p - 1) * (q - 1)
-        e_list = [i for i in range(5001, 6000) if gcd(i, phi1) == 1 and i not in (p, q)]
-        e = st.selectbox("公開鍵 e", e_list, key='solo_e')
+        e_default = int(st.session_state.get('solo_e', 5001) or 5001)
+        e = st.number_input("公開鍵 e (5001–5999)", min_value=5001, max_value=5999,
+                            value=e_default, step=1, key='solo_e')
+
+    phi1 = (p - 1) * (q - 1)
+    valid_now = (gcd(e, phi1) == 1) and (e not in (p, q))
+    st.caption(f"現在の e の妥当性: {'OK' if valid_now else 'NG'} / φ(n)={phi1}")
+
+    with st.expander("e の候補を見る（5001–5999）"):
+        st.write(e_candidates(phi1, p, q)[:50])
 
     if st.button("鍵生成", key='solo_gen'):
         if p == q:
             st.error("p と q は異なる素数を選んでください。")
+        elif not valid_now:
+            st.error("e は φ(n) と互いに素で、p と q とも異なる必要があります。")
         else:
             n1 = p * q
             d1 = mod_inverse(e, phi1)
-            st.session_state.update({'n': n1, 'e': e, 'd': d1, 'done_solo': True})
-            # 後続欄の自動入力
-            st.session_state['solo_enc_n'] = str(n1)
-            st.session_state['solo_enc_e'] = str(e)
-            st.session_state['solo_dec_n'] = str(n1)
-            st.session_state['solo_dec_d'] = str(d1) if d1 is not None else ""
-            st.success("鍵生成完了。以下の値をコピーしてください。")
+            if d1 is None:
+                st.error("d（逆元）が求まりませんでした。e と p,q を見直してください。")
+            else:
+                st.session_state.update({'n': n1, 'e': e, 'd': d1, 'done_solo': True})
+                # 後続欄の自動入力
+                st.session_state['solo_enc_n'] = str(n1)
+                st.session_state['solo_enc_e'] = str(e)
+                st.session_state['solo_dec_n'] = str(n1)
+                st.session_state['solo_dec_d'] = str(d1)
+                st.success("鍵生成完了。以下の値をコピーしてください。")
 
     if st.session_state.done_solo:
         # 鍵表示とコピー
@@ -229,29 +273,23 @@ elif role == "一人で行う":
 
         # 暗号化
         st.header("2. 暗号化")
-        st.caption("平文は A–Z のみ（最大5文字）。")
+        st.caption(f"平文は {ALPHABET_DESC}。")
         oc1, oc2, oc3 = st.columns(3)
         with oc1:
             n_enc = st.text_input("公開鍵 n", value=st.session_state.get('solo_enc_n', "") or "", key='solo_enc_n')
         with oc2:
             e_enc = st.text_input("公開鍵 e", value=st.session_state.get('solo_enc_e', "") or "", key='solo_enc_e')
         with oc3:
-            plain1 = st.text_input("平文 (A–Z 最大5文字)", max_chars=5, key='solo_plain1')
+            plain1 = st.text_input(f"平文 ({ALPHABET_DESC})", max_chars=5, key='solo_plain1')
 
         if st.button("暗号化", key='solo_enc_btn'):
             try:
                 nv, ev = int(n_enc), int(e_enc)
-
                 plain_upper = (plain1 or "").upper()
-                if not re.fullmatch(r"[A-Z]{1,5}", plain_upper):
-                    st.error("平文は A–Z のみ（1〜5文字）で入力してください。")
+                if not re.fullmatch(r"[A-Z0-9]{1,5}", plain_upper):
+                    st.error(f"平文は {ALPHABET_DESC} で入力してください。")
                 else:
-                    size = (nv.bit_length() + 7) // 8
-                    cb = b''.join(
-                        pow(ord(c) - 65, ev, nv).to_bytes(size, 'big')
-                        for c in plain_upper
-                    )
-                    b64 = base64.b64encode(cb).decode()
+                    b64 = encrypt_blocks(plain_upper, nv, ev)
                     st.subheader("暗号文 (Base64)")
                     st.code(b64)
                     st.session_state.cipher_str = b64
@@ -278,15 +316,10 @@ elif role == "一人で行う":
         if st.button("復号", key='solo_dec_btn'):
             try:
                 nn, dd = int(n_dec), int(d_dec)
-                cb = base64.b64decode(ciph)
-                size = (nn.bit_length() + 7) // 8
-                msg = ''.join(
-                    chr(pow(int.from_bytes(cb[i:i + size], 'big'), dd, nn) + 65)
-                    for i in range(0, len(cb), size)
-                )
+                msg = decrypt_blocks(ciph, nn, dd)
                 st.success(f"復号結果: {msg}")
-            except ValueError:
-                st.error("n や d が整数ではありません。")
+            except ValueError as ve:
+                st.error(str(ve))
             except binascii.Error:
                 st.error("Base64 の形式が正しくありません。")
             except Exception as e:
