@@ -231,9 +231,6 @@ elif role == "一人で行う":
     valid_now = (gcd(e, phi1) == 1) and (e not in (p, q))
     st.caption(f"現在の e の妥当性: {'OK' if valid_now else 'NG'} / φ(n)={phi1}")
 
-    with st.expander("e の候補を見る（5001–5999）"):
-        st.write(e_candidates(phi1, p, q)[:50])
-
     if st.button("鍵生成", key='solo_gen'):
         if p == q:
             st.error("p と q は異なる素数を選んでください。")
