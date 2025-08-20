@@ -41,14 +41,11 @@ for key in ['n', 'e', 'd', 'cipher_str', 'done_recv', 'done_send', 'done_solo']:
 st.title("PrimeGuard RSA")
 st.markdown(
     """
-RSA暗号ではまず2つの大きな素数 p, q を用意し、  
-n = p × q を計算して鍵の基礎とします。
+RSA暗号ではまず2つの大きな素数 p, q を用意し、n = p × q を計算して鍵の基礎とします。
 
-**公開鍵 (n, e)**: メッセージを暗号化する鍵  
-e は (p−1)(q−1) と互いに素な自然数です  
+**公開鍵 (n, e)**: メッセージを暗号化する鍵、e は (p−1)(q−1) と互いに素な自然数です  
 
-**秘密鍵 (n, d)**: メッセージを復号する鍵  
-d は e × d ≡ 1 (mod (p−1)(q−1)) を満たす自然数です
+**秘密鍵 (n, d)**: メッセージを復号する鍵 、d は e × d ≡ 1 (mod (p−1)(q−1)) を満たす自然数です
 
 暗号化: C ≡ M^e mod n  
 復号: M ≡ C^d mod n
@@ -152,20 +149,16 @@ elif role == "一人で行う":
     # --- 授業用の説明（流れの冒頭に配置） ---
     st.markdown("""
 ### 🔑 RSAのカギの仕組み（授業用）
-| 記号 | 役割 | わかりやすい説明 |
-|------|------|------------------|
-| p, q | 秘密の大きな素数 | 「秘密の材料（素数）」<br>（“かけ算して大きな数を作るための材料”） |
-| n = p × q | モジュラス（法） | 公開鍵・秘密鍵で共通 / 「大きな数の土台」<br>（“カギの共通の土台になる数”） |
-| e | 公開指数（公開鍵の一部） | 「公開用の数字」<br>（“誰でも使っていい公開の数”） |
-| d | 秘密指数（秘密鍵の一部） | 🔑「秘密用の数字」<br>（“自分だけが知っている秘密の数”） |
+| 記号 | 役割 |
+|----------|--------------|
+| p, q | 秘密の大きな素数 |
+| n = p × q | カギの土台になる数 |
+| e | 公開鍵の一部 |
+| d | 秘密鍵の一部 |
 
-まず **秘密の材料（p, q）** を2つ用意 → かけ算で **土台 n** を作る。  
 - 公開鍵 = (**n**, **e**)  
-- 秘密鍵 = (**n**, **d**)  
-👉 公開鍵と秘密鍵は違う組だが、**n は共通**。
-""")
+- 秘密鍵 = (**d**)  
 
-    st.caption("p, q は異なる素数を選び、互いに素な e を選択してください。")
     c1, c2, c3 = st.columns(3)
     with c1:
         p = st.selectbox("素数 p", primes, key='solo_p')
@@ -187,7 +180,7 @@ elif role == "一人で行う":
     if st.session_state.done_solo:
         # 鍵表示とコピー
         for label, val in [("公開鍵 n", st.session_state.n),
-                           ("公開鍵 e", st.session_state.e),
+                           ("素数 e", st.session_state.e),
                            ("秘密鍵 d", st.session_state.d)]:
             col, btn = st.columns([3, 1])
             col.write(f"{label}: {val}")
@@ -206,7 +199,7 @@ elif role == "一人で行う":
         with oc1:
             n_enc = st.text_input("公開鍵 n", key='solo_enc_n')
         with oc2:
-            e_enc = st.text_input("公開鍵 e", key='solo_enc_e')
+            e_enc = st.text_input("素数 e", key='solo_enc_e')
         with oc3:
             plain1 = st.text_input("平文 (A-Z 最大5文字)", max_chars=5, key='solo_plain1')
 
