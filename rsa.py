@@ -116,9 +116,6 @@ if role == "受信者":
     valid_now = (gcd(e, phi) == 1) and (e not in (p, q))
     st.caption(f"現在の e の妥当性: {'OK' if valid_now else 'NG'} / φ(n)={phi}")
 
-    with st.expander("e の候補を見る（5001–5999）"):
-        st.write(e_candidates(phi, p, q)[:50])
-
     if st.button("鍵生成", key='recv_gen'):
         if p == q:
             st.error("p と q は異なる素数を選んでください。")
