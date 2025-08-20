@@ -44,16 +44,13 @@ st.markdown(
 RSA暗号ではまず2つの大きな素数 p, q を用意し、
 n = p × q を計算して鍵の基礎とします。
 
-**公開鍵 (n, e)**: メッセージを暗号化する鍵
-
+**公開鍵 (n, e)**: メッセージを暗号化する鍵  
  e は (p−1)(q−1) と互いに素な自然数です
 
-**秘密鍵 (d)**: メッセージを復号する鍵
-
+**秘密鍵 (d)**: メッセージを復号する鍵  
  d は e × d ≡ 1 (mod (p−1)(q−1)) を満たす自然数です
 
-暗号化: C ≡ M^e mod n
-
+暗号化: C ≡ M^e mod n  
 復号: M ≡ C^d mod n
 
 送信者は公開鍵で暗号化し、受信者は秘密鍵で復号します。
@@ -138,31 +135,54 @@ elif role == "送信者":
 # --- 一人で行うモード ---
 elif role == "一人で行う":
     st.header("1. 鍵生成 → 2. 暗号化 → 3. 復号")
+
+    # --- 授業用の説明（ベストな位置：一連の操作の冒頭） ---
+    st.markdown("""
+### 🔑 RSAのカギの仕組み（授業用説明）
+| 記号 | 役割 | わかりやすい説明 |
+|------|------|------------------|
+| p, q | 秘密の大きな素数 | 「秘密の材料（素数）」<br>（先生の説明では“かけ算して大きな数を作るための材料”） |
+| n = p × q | モジュラス（法） | 公開鍵と秘密鍵で共通 / 「大きな数の土台」<br>（“カギの共通の土台になる数”） |
+| e | 公開指数（公開鍵の一部） | 「公開用の数字」<br>（“誰でも使っていい公開の数”） |
+| d | 秘密指数（秘密鍵の一部） | 🔑「秘密用の数字」<br>（“自分だけが知っている秘密の数”） |
+
+RSAのカギを作るときは、まず **秘密の材料（p, q）** という大きな素数を2つ準備します。  
+そのかけ算で **大きな数の土台（n）** を作ります。  
+
+- 公開鍵 = （公開用の数字 **e** と 土台 **n** のペア）  
+- 秘密鍵 = （秘密用の数字 **d** と 土台 **n** のペア）  
+
+👉 公開鍵と秘密鍵は「違う数字の組」だけど、**共通して n を使う**のがポイントです。
+""")
+
     st.caption("p, q は異なる素数を選び、互いに素な e を選択してください。")
     c1,c2,c3 = st.columns(3)
     with c1:
-        p1 = st.selectbox("素数 p1", primes, key='solo_p1')
+        p = st.selectbox("素数 p", primes, key='solo_p')
     with c2:
-        q1 = st.selectbox("素数 q1", primes, key='solo_q1')
+        q = st.selectbox("素数 q", primes, key='solo_q')
     with c3:
-        phi1 = (p1-1)*(q1-1)
-        e1_list = [i for i in range(5001,6000) if gcd(i,phi1)==1 and i not in (p1,q1)]
-        e1 = st.selectbox("公開鍵 e1", e1_list, key='solo_e1')
+        phi1 = (p-1)*(q-1)
+        e_list = [i for i in range(5001,6000) if gcd(i,phi1)==1 and i not in (p,q)]
+        e = st.selectbox("素数 e", e_list, key='solo_e')
+
     if st.button("鍵生成", key='solo_gen'):
-        if p1==q1:
-            st.error("p1 と q1 は異なる素数を選んでください。")
+        if p == q:
+            st.error("p と q は異なる素数を選んでください。")
         else:
-            n1, d1 = p1*q1, mod_inverse(e1,phi1)
-            st.session_state.update({'n':n1,'e':e1,'d':d1,'done_solo':True})
+            n1, d1 = p*q, mod_inverse(e,phi1)
+            st.session_state.update({'n':n1,'e':e,'d':d1,'done_solo':True})
             st.success("鍵生成完了。以下の値をコピーしてください。")
+
     if st.session_state.done_solo:
-        # 鍵表示とコピー
-        for label,val in [("公開鍵 n1",st.session_state.n),("公開鍵 e1",st.session_state.e),("秘密鍵 d1",st.session_state.d)]:
+        # 鍵表示とコピー（名称を n, e, d に統一）
+        for label,val in [("公開鍵 n",st.session_state.n),("公開鍵 e",st.session_state.e),("秘密鍵 d",st.session_state.d)]:
             col,btn = st.columns([3,1])
             col.write(f"{label}: {val}")
             with btn:
                 components.html(
                     f"<button style=\"border:none;background:none;padding:0;color:blue;cursor:pointer;\" onclick=\"navigator.clipboard.writeText('{val}')\">Copy</button>", height=30)
+
         # 暗号化
         st.header("2. 暗号化")
         oc1,oc2,oc3 = st.columns(3)
@@ -182,6 +202,7 @@ elif role == "一人で行う":
                 st.session_state.cipher_str = b64
             except:
                 st.error("暗号化に失敗しました。")
+
         # 復号
         st.header("3. 復号")
         dc1,dc2,dc3 = st.columns(3)
