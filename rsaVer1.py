@@ -163,14 +163,14 @@ elif role == "送信者":
 
 # --- 一人で実験モード ---
 elif role == "一人で実験":
-    st.header("1. 鍵生成 → 2. 暗号化 → 3. 復号 (一人)")
+    st.header("1. 鍵生成 → 2. 暗号化 → 3. 復号")
     p1 = st.selectbox("素数 p1", primes, key='solo_p1')
     q1 = st.selectbox("素数 q1", primes, key='solo_q1')
     phi1 = (p1 - 1) * (q1 - 1)
     e1_list = [e for e in [3,17,65537] if gcd(e,phi1)==1] + \
               [i for i in range(5001,6000) if gcd(i,phi1)==1 and i not in (p1,q1)]
     e1 = st.selectbox("公開鍵 e1", e1_list, key='solo_e1')
-    if st.button("鍵生成（一人）", key='solo_gen'):
+    if st.button("鍵生成", key='solo_gen'):
         if p1==q1:
             st.error("p1 と q1 は異なる素数を選んでください。")
         else:
@@ -185,11 +185,11 @@ elif role == "一人で実験":
             with btn:
                 components.html(make_copy_button("Copy", val), height=40)
 
-        st.header("2. 暗号化 (一人)")
+        st.header("2. 暗号化")
         n_enc = st.text_input("公開鍵 n", key='solo_enc_n')
         e_enc = st.text_input("公開鍵 e", key='solo_enc_e')
         plain1 = st.text_input("平文 (A-Z 最大5文字)（暗号化したい文章）", max_chars=5, key='solo_plain1')
-        if st.button("暗号化 (一人)", key='solo_enc_btn'):
+        if st.button("暗号化", key='solo_enc_btn'):
             try:
                 nv2 = int(n_enc); ev2 = int(e_enc)
                 size2 = (nv2.bit_length()+7)//8
@@ -200,11 +200,11 @@ elif role == "一人で実験":
             except ValueError:
                 st.error("数値変換エラー。鍵の値を確認してください。")
 
-        st.header("3. 復号 (一人)")
+        st.header("3. 復号")
         n_dec = st.text_input("公開鍵 n", key='solo_dec_n')
         d_dec = st.text_input("秘密鍵 d", key='solo_dec_d')
         ciph = st.text_area("暗号文 (Base64)", key='solo_dec_c')
-        if st.button("復号 (一人)", key='solo_dec_btn'):
+        if st.button("復号", key='solo_dec_btn'):
             try:
                 nn = int(n_dec); dd = int(d_dec)
                 cb3 = base64.b64decode(ciph)
