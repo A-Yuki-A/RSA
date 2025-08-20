@@ -173,7 +173,8 @@ elif role == "一人で行う":
             with btn:
                 components.html(
                     f"<button style=\"border:none;background:none;padding:0;color:blue;cursor:pointer;\" onclick=\"navigator.clipboard.writeText('{val}')\">Copy</button>", height=30)
-
+    # 区切り線
+    st.markdown("---")
         # 暗号化
         st.header("2. 暗号化")
         oc1,oc2,oc3 = st.columns(3)
@@ -193,7 +194,8 @@ elif role == "一人で行う":
                 st.session_state.cipher_str = b64
             except:
                 st.error("暗号化に失敗しました。")
-
+    # 区切り線
+    st.markdown("---")
         # 復号
         st.header("3. 復号")
         dc1,dc2,dc3 = st.columns(3)
