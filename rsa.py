@@ -137,7 +137,7 @@ elif role == "送信者":
 
 # --- 一人で行うモード ---
 elif role == "一人で行う":
-    st.header("1. 鍵生成 → 2. 暗号化 → 3. 復号 (一人)")
+    st.header("1. 鍵生成 → 2. 暗号化 → 3. 復号")
     st.caption("p, q は異なる素数を選び、互いに素な e を選択してください。")
     c1,c2,c3 = st.columns(3)
     with c1:
@@ -148,7 +148,7 @@ elif role == "一人で行う":
         phi1 = (p1-1)*(q1-1)
         e1_list = [i for i in range(5001,6000) if gcd(i,phi1)==1 and i not in (p1,q1)]
         e1 = st.selectbox("公開鍵 e1", e1_list, key='solo_e1')
-    if st.button("鍵生成（一人）", key='solo_gen'):
+    if st.button("鍵生成", key='solo_gen'):
         if p1==q1:
             st.error("p1 と q1 は異なる素数を選んでください。")
         else:
@@ -164,7 +164,7 @@ elif role == "一人で行う":
                 components.html(
                     f"<button style=\"border:none;background:none;padding:0;color:blue;cursor:pointer;\" onclick=\"navigator.clipboard.writeText('{val}')\">Copy</button>", height=30)
         # 暗号化
-        st.header("2. 暗号化 (一人)")
+        st.header("2. 暗号化")
         oc1,oc2,oc3 = st.columns(3)
         with oc1:
             n_enc = st.text_input("公開鍵 n", key='solo_enc_n')
@@ -172,7 +172,7 @@ elif role == "一人で行う":
             e_enc = st.text_input("公開鍵 e", key='solo_enc_e')
         with oc3:
             plain1 = st.text_input("平文 (A-Z 最大5文字)", max_chars=5, key='solo_plain1')
-        if st.button("暗号化 (一人)", key='solo_enc_btn'):
+        if st.button("暗号化", key='solo_enc_btn'):
             try:
                 nv, ev = int(n_enc), int(e_enc)
                 size = (nv.bit_length()+7)//8
@@ -183,7 +183,7 @@ elif role == "一人で行う":
             except:
                 st.error("暗号化に失敗しました。")
         # 復号
-        st.header("3. 復号 (一人)")
+        st.header("3. 復号")
         dc1,dc2,dc3 = st.columns(3)
         with dc1:
             n_dec = st.text_input("公開鍵 n", key='solo_dec_n')
@@ -191,7 +191,7 @@ elif role == "一人で行う":
             d_dec = st.text_input("秘密鍵 d", key='solo_dec_d')
         with dc3:
             ciph = st.text_area("暗号文 (Base64)", key='solo_dec_c')
-        if st.button("復号 (一人)", key='solo_dec_btn'):
+        if st.button("復号", key='solo_dec_btn'):
             try:
                 nn, dd = map(int,(n_dec,d_dec))
                 cb = base64.b64decode(ciph)
