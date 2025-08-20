@@ -161,7 +161,7 @@ st.markdown("""
 """)  # ← これで閉じる
 
 
-    c1, c2, c3 = st.columns(3)
+c1, c2, c3 = st.columns(3)
     with c1:
         p = st.selectbox("素数 p", primes, key='solo_p')
     with c2:
