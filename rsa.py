@@ -78,20 +78,20 @@ for key in ['n', 'e', 'd', 'cipher_str', 'done_recv', 'done_solo']:
 st.title("PrimeGuard RSA")
 st.markdown(
     """
-2つの大きな素数 p, q を用意し、n = p × q を計算して鍵の基礎とする。  
+RSA暗号ではまず2つの大きな素数 p, q を用意し、n = p × q を計算して鍵の基礎とします。
 
-公開鍵 (n, e): メッセージを暗号化する鍵。　e は φ(n)=(p−1)(q−1) と互いに素な自然数。  
-秘密鍵 (n, d): メッセージを復号する鍵。　d は e × d ≡ 1 (mod φ(n)) を満たす自然数。  
+公開鍵 (n, e): メッセージを暗号化する鍵。e は φ(n)=(p−1)(q−1) と互いに素な自然数です。  
+秘密鍵 (n, d): メッセージを復号する鍵。d は e × d ≡ 1 (mod φ(n)) を満たす自然数です。
 
-秘密鍵 d は、p, q から φ(n) を計算し、その φ(n) に対する e の逆元を求めることで得られる。  
-つまり「e を φ(n) で割ったときに余りが 1 になるような数」が d である。  
+秘密鍵 d は、まず p, q から φ(n) を計算し、その φ(n) に対する e の逆元を求めることで得られます。  
+つまり「e を φ(n) で割ったときに余りが 1 になるような数」が d です。
 
 暗号化: C ≡ M^e mod n  
-復号: M ≡ C^d mod n  
+復号: M ≡ C^d mod n
 
-送信者は公開鍵で暗号化し、受信者は秘密鍵で復号する。 
+送信者は公開鍵で暗号化し、受信者は秘密鍵で復号します。
 
-> 教材上の注意: ここでは1文字ずつ暗号化する体験用モデルです。
+> 教材上の注意: ここではパディングなしで1文字ずつ暗号化する体験用モデルです（実運用のRSAではOAEP等のパディングを用い、本文は共通鍵で暗号化するのが一般的です）。
 """
 )
 
@@ -214,10 +214,10 @@ elif role == "一人で行う":
 | e | 公開鍵の一部（φ(n) と互いに素） |
 | d | 秘密鍵の一部（e の逆元） |
 
-- 公開鍵 = (**n**, **e**)  
-- 秘密鍵 = (**n**, **d**)  
+- 公開鍵 = (n, e)  
+- 秘密鍵 = (n, d)  
 
-> 教材上の注意: ここでは**パディングなしで1文字ごと**に暗号化します（体験用の簡略化）。
+> 教材上の注意: ここではパディングなしで1文字ごとに暗号化します（体験用の簡略化）。
 """)
 
     c1, c2, c3 = st.columns(3)
@@ -246,15 +246,10 @@ elif role == "一人で行う":
                 st.error("d（逆元）が求まりませんでした。e と p,q を見直してください。")
             else:
                 st.session_state.update({'n': n1, 'e': e, 'd': d1, 'done_solo': True})
-                # 後続欄の自動入力
-                st.session_state['solo_enc_n'] = str(n1)
-                st.session_state['solo_enc_e'] = str(e)
-                st.session_state['solo_dec_n'] = str(n1)
-                st.session_state['solo_dec_d'] = str(d1)
-                st.success("鍵生成完了。以下の値をコピーしてください。")
+                st.success("鍵生成完了。下に表示された値をコピーして、次の欄に貼り付けてください。")
 
     if st.session_state.done_solo:
-        # 鍵表示とコピー
+        # 鍵表示とコピー（自動入力はしない）
         for label, val in [("公開鍵 n", st.session_state.n),
                            ("公開鍵 e", st.session_state.e),
                            ("秘密鍵 d", st.session_state.d)]:
@@ -266,16 +261,17 @@ elif role == "一人で行う":
                     height=30
                 )
 
+        st.info("手順: 上の n, e, d の値をコピーし、下の各欄に貼り付けてください。")
         st.markdown("---")
 
         # 暗号化
         st.header("2. 暗号化")
-        st.caption(f"平文は {ALPHABET_DESC}。")
+        st.caption(f"平文は {ALPHABET_DESC}。上の公開鍵 n, e をコピーして貼り付けてください。")
         oc1, oc2, oc3 = st.columns(3)
         with oc1:
-            n_enc = st.text_input("公開鍵 n", value=st.session_state.get('solo_enc_n', "") or "", key='solo_enc_n')
+            n_enc = st.text_input("公開鍵 n", value="", placeholder="上で生成した n を貼り付け", key='solo_enc_n')
         with oc2:
-            e_enc = st.text_input("公開鍵 e", value=st.session_state.get('solo_enc_e', "") or "", key='solo_enc_e')
+            e_enc = st.text_input("公開鍵 e", value="", placeholder="上で生成した e を貼り付け", key='solo_enc_e')
         with oc3:
             plain1 = st.text_input(f"平文 ({ALPHABET_DESC})", max_chars=5, key='solo_plain1')
 
@@ -290,8 +286,6 @@ elif role == "一人で行う":
                     st.subheader("暗号文 (Base64)")
                     st.code(b64)
                     st.session_state.cipher_str = b64
-                    # 復号欄へも自動転送
-                    st.session_state['solo_dec_c'] = b64
             except ValueError:
                 st.error("n や e が整数ではありません。")
             except Exception as e:
@@ -301,14 +295,14 @@ elif role == "一人で行う":
 
         # 復号
         st.header("3. 復号")
-        st.caption("秘密鍵は (n, d) ですが、ここでは復号に必要な d を入力します。")
+        st.caption("秘密鍵は (n, d) です。上の値をコピーして貼り付けてください。")
         dc1, dc2, dc3 = st.columns(3)
         with dc1:
-            n_dec = st.text_input("公開鍵 n", value=st.session_state.get('solo_dec_n', "") or "", key='solo_dec_n')
+            n_dec = st.text_input("公開鍵 n", value="", placeholder="上で生成した n を貼り付け", key='solo_dec_n')
         with dc2:
-            d_dec = st.text_input("秘密鍵 d", value=st.session_state.get('solo_dec_d', "") or "", key='solo_dec_d')
+            d_dec = st.text_input("秘密鍵 d", value="", placeholder="上で生成した d を貼り付け", key='solo_dec_d')
         with dc3:
-            ciph = st.text_area("暗号文 (Base64)", value=st.session_state.get('solo_dec_c', "") or "", key='solo_dec_c')
+            ciph = st.text_area("暗号文 (Base64)", value="", placeholder="上で得た暗号文を貼り付け", key='solo_dec_c')
 
         if st.button("復号", key='solo_dec_btn'):
             try:
