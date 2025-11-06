@@ -70,9 +70,17 @@ def decrypt_blocks(b64: str, n: int, d: int) -> str:
 primes = [p for p in generate_primes(6000) if 5000 <= p <= 6000]
 
 # --- セッション初期化 ---
-for key in ['n', 'e', 'd', 'cipher_str', 'done_recv', 'done_solo']:
-    if key not in st.session_state:
-        st.session_state[key] = False if key.startswith('done_') else None
+defaults = {
+    "n": None,
+    "e": None,
+    "d": None,
+    "cipher_str": "",
+    "done_recv": False,
+    "done_solo": False,
+}
+for k, v in defaults.items():
+    if k not in st.session_state:
+        st.session_state[k] = v
 
 # --- アプリタイトル & 説明 ---
 st.title("PrimeGuard RSA")
@@ -110,10 +118,14 @@ if role == "受信者":
     with c2:
         q = st.selectbox("素数 q", primes, key='recv_q')
     with c3:
-        # e は number_input で固定入力（p,q を変えても自動変更しない）
-        e_default = int(st.session_state.get('recv_e', 5001) or 5001)
-        e = st.number_input("公開鍵 e (5001–5999)", min_value=5001, max_value=5999,
-                            value=e_default, step=1, key='recv_e')
+        # e は number_input のデフォルト値 5001 をそのまま使う
+        e = st.number_input(
+            "公開鍵 e (5001–5999)",
+            min_value=5001,
+            max_value=5999,
+            step=1,
+            key='recv_e'
+        )
 
     phi = (p - 1) * (q - 1)
     valid_now = (gcd(e, phi) == 1) and (e not in (p, q))
@@ -130,22 +142,32 @@ if role == "受信者":
             if d is None:
                 st.error("d（逆元）が求まりませんでした。e と p,q を見直してください。")
             else:
-                st.session_state.update({'n': n, 'e': e, 'd': d, 'done_recv': True})
-                st.session_state['dec_n'] = str(n)
-                st.session_state['dec_d'] = str(d)
+                st.session_state["n"] = n
+                st.session_state["e"] = e
+                st.session_state["d"] = d
+                st.session_state["done_recv"] = True
+                st.session_state["dec_n"] = str(n)
+                st.session_state["dec_d"] = str(d)
                 st.success("鍵生成完了。以下の値をコピーしてください。")
 
-    if st.session_state.done_recv:
+    if st.session_state.get("done_recv", False):
         # 鍵表示とコピーボタン
-        for label, val in [("公開鍵 n", st.session_state.n),
-                           ("公開鍵 e", st.session_state.e),
-                           ("秘密鍵 d", st.session_state.d)]:
+        for label, val in [
+            ("公開鍵 n", st.session_state["n"]),
+            ("公開鍵 e", st.session_state["e"]),
+            ("秘密鍵 d", st.session_state["d"]),
+        ]:
             col, btn = st.columns([3, 1])
             col.write(f"{label}: {val}")
             with btn:
                 components.html(
-                    f"<button style=\"border:none;background:none;padding:0;color:blue;cursor:pointer;\" onclick=\"navigator.clipboard.writeText('{val}')\">Copy</button>",
-                    height=30
+                    f"""
+                    <button style="border:none;background:none;padding:0;color:blue;cursor:pointer;"
+                        onclick="navigator.clipboard.writeText('{val}')">
+                        Copy
+                    </button>
+                    """,
+                    height=30,
                 )
 
         st.markdown("---")
@@ -154,9 +176,17 @@ if role == "受信者":
         st.caption("秘密鍵は (n, d) ですが、ここでは復号に必要な d を入力します。")
         d1, d2, d3 = st.columns(3)
         with d1:
-            n_in = st.text_input("公開鍵 n", value=st.session_state.get('dec_n', "") or "", key='dec_n')
+            n_in = st.text_input(
+                "公開鍵 n",
+                value=st.session_state.get('dec_n', "") or "",
+                key='dec_n'
+            )
         with d2:
-            d_in = st.text_input("秘密鍵 d", value=st.session_state.get('dec_d', "") or "", key='dec_d')
+            d_in = st.text_input(
+                "秘密鍵 d",
+                value=st.session_state.get('dec_d', "") or "",
+                key='dec_d'
+            )
         with d3:
             c_in = st.text_area("暗号文 (Base64)", key='dec_c')
 
@@ -178,11 +208,23 @@ elif role == "送信者":
     st.caption(f"受信者の公開鍵を入力してください。平文は {ALPHABET_DESC}。")
     s1, s2, s3 = st.columns(3)
     with s1:
-        n_in = st.text_input("公開鍵 n", value=str(st.session_state.get('n') or ""), key='enc_n')
+        n_in = st.text_input(
+            "公開鍵 n",
+            value=str(st.session_state.get('n') or ""),
+            key='enc_n'
+        )
     with s2:
-        e_in = st.text_input("公開鍵 e", value=str(st.session_state.get('e') or ""), key='enc_e')
+        e_in = st.text_input(
+            "公開鍵 e",
+            value=str(st.session_state.get('e') or ""),
+            key='enc_e'
+        )
     with s3:
-        plain = st.text_input(f"平文 ({ALPHABET_DESC})", max_chars=5, key='enc_msg')
+        plain = st.text_input(
+            f"平文 ({ALPHABET_DESC})",
+            max_chars=5,
+            key='enc_msg'
+        )
 
     if st.button("暗号化", key='enc_btn'):
         try:
@@ -194,7 +236,7 @@ elif role == "送信者":
                 b64 = encrypt_blocks(plain_upper, nv, ev)
                 st.subheader("暗号文 (Base64)")
                 st.code(b64)
-                st.session_state.cipher_str = b64
+                st.session_state["cipher_str"] = b64
         except ValueError:
             st.error("n や e が整数ではありません。")
         except Exception as e:
@@ -226,9 +268,13 @@ elif role == "一人で行う":
     with c2:
         q = st.selectbox("素数 q", primes, key='solo_q')
     with c3:
-        e_default = int(st.session_state.get('solo_e', 5001) or 5001)
-        e = st.number_input("公開鍵 e (5001–5999)", min_value=5001, max_value=5999,
-                            value=e_default, step=1, key='solo_e')
+        e = st.number_input(
+            "公開鍵 e (5001–5999)",
+            min_value=5001,
+            max_value=5999,
+            step=1,
+            key='solo_e'
+        )
 
     phi1 = (p - 1) * (q - 1)
     valid_now = (gcd(e, phi1) == 1) and (e not in (p, q))
@@ -245,20 +291,30 @@ elif role == "一人で行う":
             if d1 is None:
                 st.error("d（逆元）が求まりませんでした。e と p,q を見直してください。")
             else:
-                st.session_state.update({'n': n1, 'e': e, 'd': d1, 'done_solo': True})
+                st.session_state["n"] = n1
+                st.session_state["e"] = e
+                st.session_state["d"] = d1
+                st.session_state["done_solo"] = True
                 st.success("鍵生成完了。下に表示された値をコピーして、次の欄に貼り付けてください。")
 
-    if st.session_state.done_solo:
+    if st.session_state.get("done_solo", False):
         # 鍵表示とコピー（自動入力はしない）
-        for label, val in [("公開鍵 n", st.session_state.n),
-                           ("公開鍵 e", st.session_state.e),
-                           ("秘密鍵 d", st.session_state.d)]:
+        for label, val in [
+            ("公開鍵 n", st.session_state["n"]),
+            ("公開鍵 e", st.session_state["e"]),
+            ("秘密鍵 d", st.session_state["d"]),
+        ]:
             col, btn = st.columns([3, 1])
             col.write(f"{label}: {val}")
             with btn:
                 components.html(
-                    f"<button style=\"border:none;background:none;padding:0;color:blue;cursor:pointer;\" onclick=\"navigator.clipboard.writeText('{val}')\">Copy</button>",
-                    height=30
+                    f"""
+                    <button style="border:none;background:none;padding:0;color:blue;cursor:pointer;"
+                        onclick="navigator.clipboard.writeText('{val}')">
+                        Copy
+                    </button>
+                    """,
+                    height=30,
                 )
 
         st.info("手順: 上の n, e, d の値をコピーし、下の各欄に貼り付けてください。")
@@ -269,11 +325,25 @@ elif role == "一人で行う":
         st.caption(f"平文は {ALPHABET_DESC}。上の公開鍵 n, e をコピーして貼り付けてください。")
         oc1, oc2, oc3 = st.columns(3)
         with oc1:
-            n_enc = st.text_input("公開鍵 n", value="", placeholder="上で生成した n を貼り付け", key='solo_enc_n')
+            n_enc = st.text_input(
+                "公開鍵 n",
+                value="",
+                placeholder="上で生成した n を貼り付け",
+                key='solo_enc_n'
+            )
         with oc2:
-            e_enc = st.text_input("公開鍵 e", value="", placeholder="上で生成した e を貼り付け", key='solo_enc_e')
+            e_enc = st.text_input(
+                "公開鍵 e",
+                value="",
+                placeholder="上で生成した e を貼り付け",
+                key='solo_enc_e'
+            )
         with oc3:
-            plain1 = st.text_input(f"平文 ({ALPHABET_DESC})", max_chars=5, key='solo_plain1')
+            plain1 = st.text_input(
+                f"平文 ({ALPHABET_DESC})",
+                max_chars=5,
+                key='solo_plain1'
+            )
 
         if st.button("暗号化", key='solo_enc_btn'):
             try:
@@ -285,7 +355,7 @@ elif role == "一人で行う":
                     b64 = encrypt_blocks(plain_upper, nv, ev)
                     st.subheader("暗号文 (Base64)")
                     st.code(b64)
-                    st.session_state.cipher_str = b64
+                    st.session_state["cipher_str"] = b64
             except ValueError:
                 st.error("n や e が整数ではありません。")
             except Exception as e:
@@ -298,11 +368,26 @@ elif role == "一人で行う":
         st.caption("秘密鍵は (n, d) です。上の値をコピーして貼り付けてください。")
         dc1, dc2, dc3 = st.columns(3)
         with dc1:
-            n_dec = st.text_input("公開鍵 n", value="", placeholder="上で生成した n を貼り付け", key='solo_dec_n')
+            n_dec = st.text_input(
+                "公開鍵 n",
+                value="",
+                placeholder="上で生成した n を貼り付け",
+                key='solo_dec_n'
+            )
         with dc2:
-            d_dec = st.text_input("秘密鍵 d", value="", placeholder="上で生成した d を貼り付け", key='solo_dec_d')
+            d_dec = st.text_input(
+                "秘密鍵 d",
+                value="",
+                placeholder="上で生成した d を貼り付け",
+                key='solo_dec_d'
+            )
         with dc3:
-            ciph = st.text_area("暗号文 (Base64)", value="", placeholder="上で得た暗号文を貼り付け", key='solo_dec_c')
+            ciph = st.text_area(
+                "暗号文 (Base64)",
+                value="",
+                placeholder="上で得た暗号文を貼り付け",
+                key='solo_dec_c'
+            )
 
         if st.button("復号", key='solo_dec_btn'):
             try:
